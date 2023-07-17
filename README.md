@@ -100,14 +100,14 @@ The main app connects to external Chinese servers and is garbage in general, wor
 At this point we pretty much have a plain Linux base running with most of the crap halted. The exploit script also launches the necessary network connection scripts which was previously done by the app. At this point the camera is much safer and can finally operate on an isolated VLAN without internet access (as all IOT devices should be).
 
 # Snapshot app
-The `anyka_v380ipcam_experiments` repo has a good Snapshot app that provides `bmp (640x480)` snapshots on `http://IP:3000/Snapshot.bmp`. Simply copy the necessary oldcam library folder along with the executable to the SD in anyka_hack folder (`/mnt/anyka_hack/` in the system when mounted) and the exploit will launch it. I also created a daemon script for this app to make sure it is restarted if crashed (when trying to load a new image too soon)
+The [anyka_v380ipcam_experiments](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master) repo has a good Snapshot app that provides `bmp (640x480)` snapshots on `http://IP:3000/Snapshot.bmp`. Simply copy the necessary oldcam library folder along with the executable to the SD in anyka_hack folder (`/mnt/anyka_hack/` in the system when mounted) and the exploit will launch it. I also created a daemon script for this app to make sure it is restarted if crashed (when trying to load a new image too soon)
 
 # RTSP
-Using the `Nemobi/Anyka` repo rtsp demo executable results in a lot of errors. The libs are loaded similarly to the snapshot app, 
+Using the [Nemobi/Anyka](https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root) repo rtsp demo executable results in a lot of errors. The libs are loaded similarly to the snapshot app, 
 
 `LD_LIBRARY_PATH=/mnt/anyka_hack/lib_rtsp:/mnt/anyka_hack/oldcam/usr/lib` (from SD card folder)
 
-before launching the executable. First of all my camera does not support `/etc/jffs2/` folder path for H63 sensor conf file, I had to modify the 2 bytes of the binary to point to `/etc/jffs2/c`. When that was done, it complained that the conf file was too old version and needed `version 3`, so using an alternative conf file (https://github.com/Nemobi/Anyka/blob/main/device/squashfs-root/local/isp_h63_mipi_1lane_101402.conf) for the same sensor solved that. Then it could finally launch rtsp, but right away gives error. (full log available in folder)
+before launching the executable. First of all my camera does not support `/etc/jffs2/` folder path for H63 sensor conf file, I had to modify the 2 bytes of the binary to point to `/etc/jffs2/c`. When that was done, it complained that the conf file was too old version and needed `version 3`, so using an [alternative conf file](https://github.com/Nemobi/Anyka/blob/main/device/squashfs-root/local/isp_h63_mipi_1lane_101402.conf) for the same sensor solved that. Then it could finally launch rtsp, but right away gives error. (full log available in [folder](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/rtsp/manual_launch.log))
 
 ```
 [get_v4l2_ptr:408] select timeout!
