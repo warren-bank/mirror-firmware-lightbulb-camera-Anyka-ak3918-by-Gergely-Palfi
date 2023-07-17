@@ -2,6 +2,15 @@
 
 My attempt at reverse engineering and making use of a Chinese junk camera
 
+# Summary
+
+- I got a permanent exploit that keeps telnet open for me
+- UART header gives debug info, u-boot delay = 0 so can't get in
+- Created some scripts that halt the main app and handle wifi connection instead of it
+- The camera can now operate in isolation from the internet
+- Found snapshot examples and got bmp image on port 3000
+- trying to get rtsp working at the moment
+
 # Info Links
 
 cool info:
@@ -56,26 +65,34 @@ After opening the camera box, I got to work. Without even powering the camera on
 
 Using an arduino Uno and a home made flash chip holder (fabricated from plastic card and some pin headers) I cloned the flash to an image file. Follow this guide: https://kaanlabs.com/bios-flashing-with-an-arduino-uno/
 
+The dump of the camera may be available in the future (should not contain personal info as it was made before first power on, but it still has a unique ID for the cloud). When I have completely made the camera independent of the chinese cloud servers, then the dump will be public. (questions: mailto: admin@raspiweb.com)
+
 # Step One, UART
 Soldered a pin header to the RX0 TX0 GND points next to the wifi chip. For UART converter I am using and ESP8266 (wemos D1 mini) arduino compatible board (CH340 serial chip). It is just a matter of bridging the reset pin to GND and connecting up the UART bus (`RX -> RXD, TX -> TXD, GND -> GND`) Note GND must be correct, but if the RT and TX are connected wrong and there is no output, just swap the wires, there is no harm.
 
 This potentially gives access to U-Boot, but in my case not. This port provides essential information about the boot process and helps with debugging when errors are reported here.
 
 # First power on
-Not knowng much about the camera (have not analysed the flash dump yet), just set up the camera as usual with the broken english translated instructions. Now looking back at it, this is not necessary as FTP access should still work in AP mode and from then onward the wifi password (`/etc/jffs2anyka_cfg.ini`) and exploit scripts can be inserted.
+Not knowng much about the camera (have not analysed the flash dump yet), just set up the camera as usual with the broken english translated instructions. Now looking back at it, this is not necessary as FTP access should still work in AP mode and from then onward the wifi password (`/etc/jffs2/anyka_cfg.ini`) and exploit scripts can be inserted.
 
 # Getting In
 Based on the general info online there are 3 ways in
 1) through U-Boot (set init to shell)
 2) through open telnet port
-3) through open FTP port
+3) through open FTP port `ftp ftp://root:@192.168.10.191`
 
 (U-Boot time out is 0, so could not find a way to interrupt and get in, telnet port is not open, it gets killed by service.sh)
 
 In my case options 1 and 2 were not available, but the FTP port was open. It just happens that the rw `/etc/jffs2/` folder has `time_zone.sh` which is a prime target for code execution.
 
 # Permanent back door
-The time_zone.sh script is overwritten each time the app finds the server and syncs time. So some simple bash scripting to create a daemon to repair the exploit when removed solves that.
+The time_zone.sh script is overwritten each time the app finds the server and syncs time. So some simple bash scripting to create a daemon that repairs the exploit when removed solves that.
+1) open ftp terminal from the scripts folder `ftp ftp://root:@192.168.10.191`
+2) `cd /etc/jffs2`
+3) `mput time_zone.sh`, `mput gergehack.sh`, and `mput gergedaemeon.sh`
+4) `quit`
+
+reboot the camera, then telnet will be open every time. Connect with: `telnet 192.168.10.191` (root no password)
 
 # Halting the main app
 The main app connects to external Chinese servers and is garbage in general, worst of all the camera refuses to work if it is blocked from accessing the internet. With the goal of using RTSP instead, there is no need for it to run at all. The exploit scripts take care of that, as they halt the init processes of the app with some time wasting sleep loops.
@@ -90,7 +107,7 @@ Using the `Nemobi/Anyka` repo rtsp demo executable results in a lot of errors. T
 
 `LD_LIBRARY_PATH=/mnt/anyka_hack/lib_rtsp:/mnt/anyka_hack/oldcam/usr/lib` (from SD card folder)
 
-before launching the executable. First of all my camera does not support `/etc/jffs2/` folder path for H63 sensor conf file, I had to modify the 2 bytes of the binary to point to `/etc/jffs2/c`. When that was done, it complained that the conf file was too old version and needed `version 3`, so using an alternative conf file (https://github.com/Nemobi/Anyka/blob/main/device/squashfs-root/local/isp_h63_mipi_1lane_101402.conf) for the same sensor solved that. Then it could finally launch rtsp, but right away gives error.
+before launching the executable. First of all my camera does not support `/etc/jffs2/` folder path for H63 sensor conf file, I had to modify the 2 bytes of the binary to point to `/etc/jffs2/c`. When that was done, it complained that the conf file was too old version and needed `version 3`, so using an alternative conf file (https://github.com/Nemobi/Anyka/blob/main/device/squashfs-root/local/isp_h63_mipi_1lane_101402.conf) for the same sensor solved that. Then it could finally launch rtsp, but right away gives error. (full log available in folder)
 
 ```
 [get_v4l2_ptr:408] select timeout!
@@ -107,4 +124,77 @@ The point of attention now is `libplat_vi.so` which contains the offending `get_
 ```
 insmod: can't insert 'akcamera.ko': unknown symbol in module, or unknown parameter
 insmod: can't insert 'ak_info_dump.ko': unknown symbol in module, or unknown parameter
+```
+
+# Boot Process Map
+The boot process looks something like this:
+```
+  ________________________
+ |                        |
+ |         U-Boot         | (interrupt delay is 0, can't get in)
+ |________________________|
+              |
+              V
+  ________________________
+ |                        |
+ |         Kernel         | (Kernel command line: console=ttySAK0,115200n8 root=/dev/mtdblock4 rootfstype=squashfs init=/sbin/init mem=64M memsize=64M)
+ |________________________|
+              |
+              V
+  ________________________
+ |          init          |
+ |     /etc/init.d/rcS    | (mounts filesystem, sets hostname)
+ |________________________|
+              |
+              V
+  ________________________
+ |                        |
+ |  /etc/init.d/rc.local  | (mount squashfs, mount jffs2, ftp server, ramdisk)
+ |________________________|
+              |
+              V
+  ________________________
+ |                        |
+ |  /usr/sbin/camera.sh   | (load modules)
+ |________________________|
+              |
+              V
+  ________________________
+ |                        |
+ |  /usr/sbin/service.sh  | (cmd_serverd, check sd card for factory tests and debug modes)
+ |________________________| [NOTE: this check of the SD card is also a potential code execution entry point]
+              |
+              V
+  _____________________________
+ |                             |
+ |/usr/sbin/anyka_ipc.sh start | (this process loads /etc/jffs2/time_zone.sh before calling the /bin/anyka_ipc app)
+ |_____________________________| (It never gets to the /bin/anyka_ipc app)
+                |
+                V
+  _____________________________
+ |                             |
+ |   /etc/jffs2/time_zone.sh   | (with the expoit lines present: launch telnet, call gergehack.sh)
+ |_____________________________|
+                |
+                V
+  _____________________________
+ |                             | [holds the first 2 processes of anyka_ipc in a sleep loop]
+ |   /etc/jffs2/gergehack.sh   | (launch gergedaemeon.sh, launch wifi_manage.sh, launch snapshot_daemon.sh)
+ |_____________________________|
+                |__________________________________________________________________________
+                V                                      |                                   |
+  ____________________________________                 |                                   |
+ |                                    |                |                                   |
+ | /mnt/anyka_hack/snapshot_daemon.sh |                |                                   |
+ |____________________________________|                V                                   |
+     (restart snapshot if crashed)        ____________________________                     |
+                   |                     |                            |                    |
+                   |                     | /etc/jffs2/gergedaemeon.sh |                    |
+                   |                     |____________________________|                    V
+                   V                         (fix exploit if needed)       ________________________________
+  ______________________________________                                  |                                |
+ |                                      |                                 | /usr/sbin/wifi_manage.sh start |
+ | /mnt/anyka_hack/snapshot/ak_snapshot |                                 |________________________________|
+ |______________________________________|                       (takes care of wifi connection and network setup)
+             (port 3000)
 ```

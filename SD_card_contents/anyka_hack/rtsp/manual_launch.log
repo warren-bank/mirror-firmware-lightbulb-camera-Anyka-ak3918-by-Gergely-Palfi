@@ -1,0 +1,108 @@
+[root@anyka /mnt/anyka_hack]$ LD_LIBRARY_PATH=/mnt/anyka_hack/lib_rtsp:/mnt/anyka_hack/oldcam/usr/lib
+[root@anyka /mnt/anyka_hack]$ ./twobit_ak_rtsp_demo
+map log file ok
+default log level=4
+[ak_vi_match_sensor:940]  config_file: /etc/jffs2/c
+[isp.conf]version: 1014, sensor id: 0xa63, style id: 0
+isp subfile 0, modify time: 2020-10-14 19:26:00
+1014 wb/ccm/gamma/saturation
+
+
+8.24 blc awb wdr
+4.27 3DNR denoise WB
+4.12 denoise DPC
+5.12 EXP BLC CCM
+8.4 denoise wdr yz
+8.24 blc awb wdr sharp
+9.8 wdr ae
+
+isp subfile 1, modify time: 2020-10-9 17:07:03
+4.12 3dnr sharp exp
+4.27 3DNR denoise
+8.4 denoise wdr sharp 3dnr
+10.9 exp fps and exp time all use 15fps 1972 time
+10.9 exp time and fps night day all same
+2020.3.12 modify again max value is 3968 because reg 0 for H63 is 00 to 3F
+2020.1.19 modify for h63
+
+
+[ak_vi_open:981] register device, dev type: 0
+new device
+[vi_register_device:785] new dev=0x28168
+
+----- libakuio.so V3.1.01 -----
+[libakuio][/dev/ion] kernel config reserve mem size: 25165824, 0x1800000
+
+[libakuio]ION: alloc 25165824 bytes for process 9552
+[libakuio]ION: yield 5 for iad 0xb6f48b78, len: 25165824
+
+--------------- pmem info ---------------
+    PMEM_GET_TOTAL_SIZE: 25165824 bytes
+    PMEM_GET_PHYS: 0x80000000
+    pmem.vaddr: 0xb549a000
+--------------- info End ---------------
+
+####akuio pmem init success###
+
+ispsdk_lib version:V3.1.01
+--- AK_ISP_sdk_init g_fd=8 ---
+ 1 close fd:7
+hight light:
+        frame_rate=15 max_exp_time=1972 low_light_gain=16
+low light:
+        frame_rate=15 max_exp_time=1972 light_gain=5
+hight light fps: 15
+[isp_set_sensor_fps:1900] set sensor fps: 15
+[set_fps:194] set fps:15 ok
+
+[ak_cmd_register_module:741] no server was register, can not register module
+register vi device ok, dev_count=1
+[ak_vi_open:991] register device OK, pdev: 0x28168
+[vi_new_user:624] now user_flg=0, user_ref=1
+sensor resolution height:720, width:1280.
+[load_def_awb_step:214] get awb_attr ok, auto_awb_step:10
+hight light:
+        frame_rate=15 max_exp_time=1972 low_light_gain=16
+low light:
+        frame_rate=15 max_exp_time=1972 light_gain=5
+hight light fps: 15
+[change_fps_pthread:728] thread id: 9555
+[isp_set_sensor_fps:1900] set sensor fps: 15
+[set_fps:194] set fps:15 ok
+init CROP succeedded! reset to CROP[1280, 720]
+[vi_set_channel_attr:916] main change resolution to: w: 1920, h: 1080
+[vi_set_channel_attr:918] sub change resolution to: w: 640, h: 360
+[ak_rtsp_vi_init:148] start capture ...
+[malloc_capture_buffers:115] ion_mem: 0xb590d100, temp: 0x80473100
+[malloc_capture_buffers:122] n_buffers: 0, start: 0xb590d100, length: 3575808
+[malloc_capture_buffers:122] n_buffers: 1, start: 0xb5c76100, length: 3575808
+[malloc_capture_buffers:122] n_buffers: 2, start: 0xb5fdf100, length: 3575808
+[malloc_capture_buffers:128] set buffer size: 3575808 ok
+[isp_vi_capture_on:718] stream on, drop first 3 frames
+
+[get_v4l2_ptr:408] select timeout!
+
+[isp_vi_capture_on:724] get v4l2 frame ptr failed!
+
+[ak_rtsp_vi_init:150] start capture failed
+[ak_vi_close:1695] enter close vi
+[ak_vi_close:1719] user_ref=0
+
+[ak_cmd_unregister_msg_handle:687] no server was register, can not register message
+
+[ak_cmd_unregister_msg_handle:687] no server was register, can not register message
+
+[ak_cmd_unregister_msg_handle:687] no server was register, can not register message
+
+[ak_cmd_unregister_module:770] no server was register, can not unregister module
+[isp_module_deinit:1168] join change_fps_thread...
+[reload_config_awb_step:234] get awb_attr ok, cur auto_awb_step:10, set to step:10
+[change_fps_pthread:755] thread exit, tid: 9555
+[isp_module_deinit:1170] change_fps_thread join OK
+--- AK_ISP_sdk_exit g_fd=8 closed ---
+[vi_unregister_device:759] unregister done
+[ak_vi_close:1731] leave
+
+vi init fail
+[root@anyka /mnt/anyka_hack]$
+

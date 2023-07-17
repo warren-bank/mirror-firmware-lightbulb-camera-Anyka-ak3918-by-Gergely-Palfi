@@ -7,5 +7,5 @@
 export LD_LIBRARY_PATH=/mnt/anyka_hack/lib_rtsp:/mnt/anyka_hack/oldcam/usr/lib
 
 
-./mnt/anyka_hack/ak_rtsp_demo
+#./mnt/anyka_hack/ak_rtsp_demo
 
