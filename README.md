@@ -30,6 +30,8 @@ Discussion:
 
 https://github.com/e27-camera-hack/E27-Camera-Hack/discussions/1
 
+https://github.com/alienatedsec/yi-hack-v5/discussions/236
+
 toolchain:
 
 https://github.com/ricardojlrufino/arm-anykav200-crosstool
