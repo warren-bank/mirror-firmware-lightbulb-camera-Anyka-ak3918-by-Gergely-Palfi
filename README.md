@@ -13,7 +13,7 @@ My attempt at reverse engineering and making use of a Chinese junk camera
 
 # Info Links
 
-cool info:
+## Cool info:
 
 https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master
 
@@ -36,17 +36,15 @@ https://github.com/e27-camera-hack/E27-Camera-Hack/discussions/1
 
 https://github.com/alienatedsec/yi-hack-v5/discussions/236
 
-toolchain:
+## Toolchain
 
 https://github.com/ricardojlrufino/arm-anykav200-crosstool
 
 https://github.com/Lamobo/Lamobo-D1/tree/master (waaayyy too outdated)
 
-source of example modules and firmware parts (rtsp)
+## Source
 
 https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root
-
-source
 
 https://github.com/burlizzi/anyka/tree/master
 
@@ -68,7 +66,7 @@ https://github.com/helloworld-spec/qiwen/tree/main/anycloud39ev300 (explanation 
 
 https://github.com/Nemobi/ak3918ev300v18
 
-other resources:
+## Other resources
 
 https://www.linux4sam.org/bin/view/Linux4SAM/UsingIsi?skin=print.myskin
 
