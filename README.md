@@ -44,8 +44,6 @@ https://github.com/Lamobo/Lamobo-D1/tree/master (waaayyy too outdated)
 
 ## Source
 
-https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root
-
 https://github.com/burlizzi/anyka/tree/master
 
 or https://github.com/jingwenyi/SmartCamera/tree/master (seems to be the same at a glance)
