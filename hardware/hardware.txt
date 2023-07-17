@@ -1,0 +1,6 @@
+SOC: ANYKA AK3918EN080
+WIFI: REALTEK 8188FTV
+[802.11bgn USB 2.0 Network Interface Controller ]
+there is a separate pcb antenna, the external antenna is completely fake
+FLASH: BoyaMicro 25Q64ESSIG
+STEPPER DRIVER: ULN2003L
