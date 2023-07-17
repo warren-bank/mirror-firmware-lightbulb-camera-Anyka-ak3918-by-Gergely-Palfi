@@ -19,12 +19,16 @@ https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master
 
 https://github.com/JayGoldberg/anyka-cams
 
-blog:
+blogs/articles with cool info:
 
 https://ricardojlrufino.wordpress.com/2022/02/14/hack-ipcam-anyka-teardown-and-root-access/
 
 https://ricardojlrufino.wordpress.com/2022/02/15/hack-ipcam-anyka-booting-rootfs-from-sdcard/
 ...(more pages)
+
+https://lucasteske.dev/2019/06/reverse-engineering-cheap-chinese-vrcam-protocol/
+
+https://boschko.ca/hardware_hacking_yo_male_fertility/ (weird, but ok)
 
 Discussion:
 
@@ -36,29 +40,39 @@ toolchain:
 
 https://github.com/ricardojlrufino/arm-anykav200-crosstool
 
+https://github.com/Lamobo/Lamobo-D1/tree/master (waaayyy too outdated)
+
 source of example modules and firmware parts (rtsp)
 
 https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root
 
-source (seems to be the same at a glance)
+source
 
-https://github.com/burlizzi/anyka/tree/master/source
+https://github.com/burlizzi/anyka/tree/master
 
-https://github.com/jingwenyi/SmartCamera/tree/master/source/updater
+or https://github.com/jingwenyi/SmartCamera/tree/master (seems to be the same at a glance)
 
-slightly newer SOC version (not very useful for me):
+https://github.com/grangerecords/anyka/tree/master
 
 https://github.com/mucephi/anyka_ak3918_kernel
 
-https://github.com/helloworld-spec/qiwen/tree/6c86facd09a5c2efe5314a669f653fa90acbc999/anycloud39ev300
+https://github.com/Nemobi/Anyka/tree/main
+
+https://github.com/ThatUsernameAlreadyExist/anyka-software (very recent and promising)
+
+(v4lrtspserver, live555, lighttpd)
+
+slightly newer SOC version (not very useful for me):
+
+https://github.com/helloworld-spec/qiwen/tree/main/anycloud39ev300 (explanation in chinese, good reference)
+
+https://github.com/Nemobi/ak3918ev300v18
 
 other resources:
 
 https://www.linux4sam.org/bin/view/Linux4SAM/UsingIsi?skin=print.myskin
 
 https://blog.51cto.com/chenguang/2379530
-
-https://github.com/ThatUsernameAlreadyExist/anyka-software
 
 # Step Zero, Flash backup
 (never start hacking until you have a safe recovery plan in case of a brick)

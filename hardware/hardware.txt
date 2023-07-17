@@ -2,7 +2,7 @@ SOC: ANYKA AK3918EN080 v200
 WIFI: REALTEK 8188FTV
 [802.11bgn USB 2.0 Network Interface Controller ]
 there is a separate pcb antenna, the external antenna is completely fake
-FLASH: BoyaMicro 25Q64ESSIG
+FLASH: BoyaMicro 25Q64ESSIG [8MB]
 STEPPER DRIVER: ULN2003L
 IMAGE_SENSOR: H63
 
