@@ -63,14 +63,18 @@ https://github.com/ThatUsernameAlreadyExist/anyka-software
 # Step Zero, Flash backup
 (never start hacking until you have a safe recovery plan in case of a brick)
 
-After opening the camera box, I got to work. Without even powering the camera on, just straight away opened the camra and removed the flash chip. (pictures of the insides included)
+After opening the camera box, I got to work. Without even powering the camera on, just straight away opened the camra and removed the flash chip. [pictures of the insides](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/Images)
 
 Using an arduino Uno and a home made flash chip holder (fabricated from plastic card and some pin headers) I cloned the flash to an image file. Follow this guide: https://kaanlabs.com/bios-flashing-with-an-arduino-uno/
 
-The dump of the camera may be available in the future (should not contain personal info as it was made before first power on, but it still has a unique ID for the cloud). When I have completely made the camera independent of the chinese cloud servers, then the dump will be public. (questions: mailto: admin@raspiweb.com)
+NOTE: the Arduino Uno is 5V logic, so a resistor array is needed as a voltage difider
+
+The dump of the camera may be available in the future (should not contain personal info as it was made before first power on, but it still has a unique ID for the cloud). When I have completely made the camera independent of the chinese cloud servers, then the dump will be public. (questions: <admin@raspiweb.com>)
 
 # Step One, UART
 Soldered a pin header to the RX0 TX0 GND points next to the wifi chip. For UART converter I am using and ESP8266 (wemos D1 mini) arduino compatible board (CH340 serial chip). It is just a matter of bridging the reset pin to GND and connecting up the UART bus (`RX -> RXD, TX -> TXD, GND -> GND`) Note GND must be correct, but if the RT and TX are connected wrong and there is no output, just swap the wires, there is no harm.
+
+NOTE: the esp8266 is 3.3v logic so direct connection is fine
 
 This potentially gives access to U-Boot, but in my case not. This port provides essential information about the boot process and helps with debugging when errors are reported here.
 
@@ -139,8 +143,8 @@ The boot process looks something like this:
               V
   ________________________
  |                        |
- |         Kernel         | (Kernel command line: console=ttySAK0,115200n8 root=/dev/mtdblock4 rootfstype=squashfs init=/sbin/init mem=64M memsize=64M)
- |________________________|
+ |         Kernel         | (Kernel command line: console=ttySAK0,115200n8 root=/dev/mtdblock4
+ |________________________| rootfstype=squashfs init=/sbin/init mem=64M memsize=64M)
               |
               V
   ________________________
