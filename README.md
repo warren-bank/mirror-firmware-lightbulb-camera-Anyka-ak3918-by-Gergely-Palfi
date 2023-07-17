@@ -45,7 +45,6 @@ https://github.com/Lamobo/Lamobo-D1/tree/master (waaayyy too outdated)
 ## Source
 
 https://github.com/burlizzi/anyka/tree/master
-
 or https://github.com/jingwenyi/SmartCamera/tree/master (seems to be the same at a glance)
 
 https://github.com/grangerecords/anyka/tree/master
@@ -54,7 +53,8 @@ https://github.com/mucephi/anyka_ak3918_kernel
 
 https://github.com/Nemobi/Anyka/tree/main
 
-https://github.com/ThatUsernameAlreadyExist/anyka-software (very recent and promising)
+https://github.com/ThatUsernameAlreadyExist/anyka-v4l2rtspserver
+and https://github.com/ThatUsernameAlreadyExist/anyka-software (very recent and promising)
 
 (v4lrtspserver, live555, lighttpd)
 
