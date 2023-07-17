@@ -41,6 +41,14 @@ https://github.com/mucephi/anyka_ak3918_kernel
 
 https://github.com/helloworld-spec/qiwen/tree/6c86facd09a5c2efe5314a669f653fa90acbc999/anycloud39ev300
 
+other resources:
+
+https://www.linux4sam.org/bin/view/Linux4SAM/UsingIsi?skin=print.myskin
+
+https://blog.51cto.com/chenguang/2379530
+
+https://github.com/ThatUsernameAlreadyExist/anyka-software
+
 # Step Zero, Flash backup
 (never start hacking until you have a safe recovery plan in case of a brick)
 
