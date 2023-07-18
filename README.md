@@ -73,7 +73,7 @@ https://blog.51cto.com/chenguang/2379530
 # Step Zero, Flash backup
 (never start hacking until you have a safe recovery plan in case of a brick)
 
-After opening the camera box, I got to work. Without even powering the camera on, just straight away opened the camra and removed the flash chip. [pictures of the insides](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/Images)
+After opening the camera box, I got to work. Without even powering the camera on, just straight away opened it and removed the flash chip. [pictures of the insides](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/Images)
 
 Using an arduino Uno and a home made flash chip holder (fabricated from plastic card and some pin headers) I cloned the flash to an image file. Follow this guide: https://kaanlabs.com/bios-flashing-with-an-arduino-uno/
 
