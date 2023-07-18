@@ -86,16 +86,22 @@ Soldered a pin header to the RX0 TX0 GND points next to the wifi chip. For UART 
 
 NOTE: the esp8266 is 3.3v logic so direct connection is fine
 
-This potentially gives access to U-Boot, but in my case not. This port provides essential information about the boot process and helps with debugging when errors are reported here.
+For software to connect anything works:
+- Arduino IDE serial monitor baud: 115200 (line ending "carriage return")
+- `minicom -b 115200 -D /dev/ttyUSB0` (you can exit with ctrl-A then q)
+- `stty 115200 -F /dev/ttyUSB0 raw -echo` and `cat /dev/ttyUSB0` (not interactive) BONUS: it is colourful, this is my preffered way to view log
+
+This potentially gives access to U-Boot, but in my case could not get in. This port provides essential information about the boot process and helps with debugging when errors are reported here.
 
 # First power on
 Not knowng much about the camera (have not analysed the flash dump yet), just set up the camera as usual with the broken english translated instructions. Now looking back at it, this is not necessary as FTP access should still work in AP mode and from then onward the wifi password (`/etc/jffs2/anyka_cfg.ini`) and exploit scripts can be inserted.
 
 # Getting In
 Based on the general info online there are 3 ways in
-1) through U-Boot (set init to shell)
-2) through open telnet port
-3) through open FTP port `ftp ftp://root:@192.168.10.191`
+1) through UART U-Boot (set init to shell) to get a clean prompt without messages
+2) try to use UART prompt as is overflowing with messages
+3) through open telnet port
+4) through open FTP port `ftp ftp://root:@192.168.10.191`
 
 
 By default the ports on the camera are:
@@ -113,9 +119,11 @@ PORT     STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 5.03 seconds
 ```
 
-(U-Boot time out is 0, so could not find a way to interrupt and get in, telnet port is not open, it gets killed by service.sh)
+-U-Boot time out is 0, so could not find a way to interrupt and get in
+-The UART output with the app running is cluttered with messages (not pretty but maybe usable, I have not tried)
+-Telnet port is not open
 
-In my case options 1 and 2 were not available, but the FTP port was open. It just happens that the rw `/etc/jffs2/` folder has `time_zone.sh` which is a prime target for code execution.
+In my case options 1-2 were not available, 3 is annoying to use, but the FTP port was open. It just happens that the rw `/etc/jffs2/` folder has `time_zone.sh` which is a prime target for code execution.
 
 # Permanent back door
 The time_zone.sh script is overwritten each time the app finds the server and syncs time. So some simple bash scripting to create a daemon that repairs the exploit when removed solves that.
