@@ -77,7 +77,7 @@ After opening the camera box, I got to work. Without even powering the camera on
 
 Using an arduino Uno and a home made flash chip holder (fabricated from plastic card and some pin headers) I cloned the flash to an image file. Follow this guide: https://kaanlabs.com/bios-flashing-with-an-arduino-uno/
 
-NOTE: the Arduino Uno is 5V logic, so a resistor array is needed as a voltage difider
+NOTE: the Arduino Uno is 5V logic, so a resistor array is needed as a voltage divider
 
 The dump of the camera may be available in the future (should not contain personal info as it was made before first power on, but it still has a unique ID for the cloud). When I have completely made the camera independent of the chinese cloud servers, then the dump will be public. (questions: <admin@raspiweb.com>)
 
