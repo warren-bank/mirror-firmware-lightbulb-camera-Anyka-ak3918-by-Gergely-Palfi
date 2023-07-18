@@ -129,7 +129,7 @@ reboot the camera, then telnet will be open every time. Connect with: `telnet 19
 # Closing the main app
 The main app connects to external Chinese servers and is garbage in general, worst of all the camera refuses to work if it is blocked from accessing the internet. With the goal of using RTSP instead, there is no need for it to run at all. The exploit scripts take care of that, stopping the daemon's watchdog process allows killing the anyka_ipc app.
 
-At this point we pretty much have a plain Linux base running with most of the crap halted. The exploit script also launches the necessary network connection scripts which was previously done by the app. The camera is much safer and can finally operate on an isolated VLAN without internet access (as all IOT devices should be).
+At this point we pretty much have a plain Linux base running with most of the crap removed. The exploit script also launches the necessary network connection scripts which was previously done by the app. The camera is much safer and can finally operate on an isolated VLAN without internet access (as all IOT devices should be).
 
 # Snapshot app
 The [anyka_v380ipcam_experiments](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master) repo has a good Snapshot app that provides `bmp (640x480)` snapshots on `http://IP:3000/Snapshot.bmp`. Simply copy the necessary oldcam library folder along with the executable to the SD in anyka_hack folder (`/mnt/anyka_hack/` in the system when mounted) and the exploit will launch it. I also created a daemon script for this app to make sure it is restarted if crashed (when trying to load a new image too soon)
