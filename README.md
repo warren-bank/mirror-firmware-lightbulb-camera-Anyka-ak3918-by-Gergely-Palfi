@@ -6,7 +6,7 @@ My attempt at reverse engineering and making use of a Chinese junk camera
 
 - I got a permanent exploit that keeps telnet open for me
 - UART header gives debug info, u-boot delay = 0 so can't get in
-- Created some scripts that halt the main app and handle wifi connection instead of it
+- Created some scripts that kill the main app and handle wifi connection instead of it
 - The camera can now operate in isolation from the internet
 - Found snapshot examples and got bmp image on port 3000
 - trying to get rtsp working at the moment
@@ -97,6 +97,22 @@ Based on the general info online there are 3 ways in
 2) through open telnet port
 3) through open FTP port `ftp ftp://root:@192.168.10.191`
 
+
+By default the ports on the camera are:
+```
+$> nmap -p 1-10000 192.168.10.191
+Starting Nmap 7.80 ( https://nmap.org ) at 2023-07-18 13:00 CEST
+Nmap scan report for 192.168.10.191
+Host is up (0.024s latency).
+Not shown: 9996 closed ports
+PORT     STATE SERVICE
+21/tcp   open  ftp
+6789/tcp open  ibm-db2-admin
+6790/tcp open  hnmp
+
+Nmap done: 1 IP address (1 host up) scanned in 5.03 seconds
+```
+
 (U-Boot time out is 0, so could not find a way to interrupt and get in, telnet port is not open, it gets killed by service.sh)
 
 In my case options 1 and 2 were not available, but the FTP port was open. It just happens that the rw `/etc/jffs2/` folder has `time_zone.sh` which is a prime target for code execution.
@@ -110,13 +126,32 @@ The time_zone.sh script is overwritten each time the app finds the server and sy
 
 reboot the camera, then telnet will be open every time. Connect with: `telnet 192.168.10.191` (root no password)
 
-# Halting the main app
-The main app connects to external Chinese servers and is garbage in general, worst of all the camera refuses to work if it is blocked from accessing the internet. With the goal of using RTSP instead, there is no need for it to run at all. The exploit scripts take care of that, as they halt the init processes of the app with some time wasting sleep loops.
+# Closing the main app
+The main app connects to external Chinese servers and is garbage in general, worst of all the camera refuses to work if it is blocked from accessing the internet. With the goal of using RTSP instead, there is no need for it to run at all. The exploit scripts take care of that, stopping the daemon's watchdog process allows killing the anyka_ipc app.
 
-At this point we pretty much have a plain Linux base running with most of the crap halted. The exploit script also launches the necessary network connection scripts which was previously done by the app. At this point the camera is much safer and can finally operate on an isolated VLAN without internet access (as all IOT devices should be).
+At this point we pretty much have a plain Linux base running with most of the crap halted. The exploit script also launches the necessary network connection scripts which was previously done by the app. The camera is much safer and can finally operate on an isolated VLAN without internet access (as all IOT devices should be).
 
 # Snapshot app
 The [anyka_v380ipcam_experiments](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master) repo has a good Snapshot app that provides `bmp (640x480)` snapshots on `http://IP:3000/Snapshot.bmp`. Simply copy the necessary oldcam library folder along with the executable to the SD in anyka_hack folder (`/mnt/anyka_hack/` in the system when mounted) and the exploit will launch it. I also created a daemon script for this app to make sure it is restarted if crashed (when trying to load a new image too soon)
+
+# Somewhat functional
+With the main anyka_ipc app and daemon listening processes removed, as well as the simple snapshot capability and telnet ports added the portscan looks like this:
+```
+$> nmap -p 1-10000 192.168.10.191
+Starting Nmap 7.80 ( https://nmap.org ) at 2023-07-18 13:34 CEST
+Nmap scan report for 192.168.10.191
+Host is up (0.024s latency).
+Not shown: 9997 closed ports
+PORT     STATE SERVICE
+21/tcp   open  ftp
+23/tcp   open  telnet
+3000/tcp open  ppp
+
+Nmap done: 1 IP address (1 host up) scanned in 5.28 seconds
+```
+The ftp port could also be closed by `killall /usr/bin/tcpsvd`, but for hacking it is a nice bonus. Either way the open ports are no longer an issue because the camera is on an isolated VLAN.
+
+The IR filter can also be operated as described [in this file](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/IR_shutter.txt).
 
 # RTSP
 Using the [Nemobi/Anyka](https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root) repo rtsp demo executable results in a lot of errors. The libs are loaded similarly to the snapshot app, 
@@ -184,7 +219,7 @@ The boot process looks something like this:
   _____________________________
  |                             |
  |/usr/sbin/anyka_ipc.sh start | (this process loads /etc/jffs2/time_zone.sh before calling the /bin/anyka_ipc app)
- |_____________________________| (It never gets to the /bin/anyka_ipc app)
+ |_____________________________| (anyka_ipc gets terminated along with the watchdog)
                 |
                 V
   _____________________________
@@ -194,7 +229,7 @@ The boot process looks something like this:
                 |
                 V
   _____________________________
- |                             | [holds the first 2 processes of anyka_ipc in a sleep loop]
+ |                             | [kill the watchdog and anyka_ipc]
  |   /etc/jffs2/gergehack.sh   | (launch gergedaemeon.sh, launch wifi_manage.sh, launch snapshot_daemon.sh)
  |_____________________________|
                 |__________________________________________________________________________
