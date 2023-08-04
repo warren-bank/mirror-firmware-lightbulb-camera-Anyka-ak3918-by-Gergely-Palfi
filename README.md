@@ -28,6 +28,8 @@ https://ricardojlrufino.wordpress.com/2022/02/15/hack-ipcam-anyka-booting-rootfs
 
 https://lucasteske.dev/2019/06/reverse-engineering-cheap-chinese-vrcam-protocol/
 
+https://github.com/c0decave/yoosee-ipc/tree/main
+
 https://boschko.ca/hardware_hacking_yo_male_fertility/ (weird, but ok)
 
 Discussion:
@@ -35,6 +37,8 @@ Discussion:
 https://github.com/e27-camera-hack/E27-Camera-Hack/discussions/1
 
 https://github.com/alienatedsec/yi-hack-v5/discussions/236
+
+https://github.com/EliasKotlyar/Xiaomi-Dafang-Hacks/issues/1672
 
 ## Toolchain
 
@@ -53,16 +57,24 @@ https://github.com/mucephi/anyka_ak3918_kernel
 
 https://github.com/Nemobi/Anyka/tree/main
 
-https://github.com/ThatUsernameAlreadyExist/anyka-v4l2rtspserver
-and https://github.com/ThatUsernameAlreadyExist/anyka-software (very recent and promising)
-
-(v4lrtspserver, live555, lighttpd)
+https://github.com/burlizzi/qiwen/tree/main
 
 slightly newer SOC version (not very useful for me):
 
 https://github.com/helloworld-spec/qiwen/tree/main/anycloud39ev300 (explanation in chinese, good reference)
 
 https://github.com/Nemobi/ak3918ev300v18
+
+## Apps and mods
+
+https://github.com/ThatUsernameAlreadyExist/anyka-v4l2rtspserver
+and https://github.com/ThatUsernameAlreadyExist/anyka-software (very recent and promising)
+
+(v4lrtspserver, live555, lighttpd)
+
+https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon
+
+https://blog.caller.xyz/v380-ipcam-firmware-patching/
 
 ## Other resources
 
