@@ -192,9 +192,9 @@ Warning: small audio files and executables should fit in the jffs2, but I recomm
 There is a great ptz motion daemon in [the link above](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon) which I was able to compile. My finished executable is provided [here]().
 
 1) open one telnet and run it `./ptz_daemon` (or use gergehack to auto-start it on boot)
-2) open second telnet and home the camera axes `echo "init" >> /tmp/ptz.daemon`
-3) move to whatever position you want `echo "t2p 190 95" >> /tmp/ptz.daemon` 190 degree horizontal, 40 vertical (0 is top)
-4) quit the daemon if you want with `echo "q" >> /tmp/ptz.daemon`, but it can just always run in the background
+2) open second telnet and home the camera axes `echo "init" > /tmp/ptz.daemon`
+3) move to whatever position you want `echo "t2p 190 95" > /tmp/ptz.daemon` 190 degree horizontal, 40 vertical (0 is top)
+4) quit the daemon if you want with `echo "q" > /tmp/ptz.daemon`, but it can just always run in the background
 
 # How to compile for AK3918?
 
@@ -209,6 +209,10 @@ I used the following command (with static libs copied to libs/ folder):
 `arm-linux-gnueabi-g++ ptz_daemon_cpp.cpp -L./libs -ldl -lplat_drv -lplat_common -lplat_thread -lpthread -D_GLIBCXX_USE_CXX11_ABI=0 -static -o ptz_daemon`
 
 Then it is a matter of copy and run on the camera. Instructions to use are on the [original page](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon)
+
+# IR filter
+
+The infra-red filter can be turned on/off in two ways. Using the `ak_drv_ir_demo` as described [here](http://192.168.1.61:3003/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/IR_shutter.txt), or using the `ptz_daemon` with command `irinit` then `irsetircut 0` or `irsetircut 1` (use with echo as above). Both of these require that the `cmd_serverd` is running, so make sure to set `kill_cmd_server=0` in `gergesettings.txt`. For some reason this feature is not even mentioned in the original ptz repo documentation, I found it by reading the source.
 
 # RTSP
 Using the [Nemobi/Anyka](https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root) repo rtsp demo executable results in a lot of errors. The libs are loaded similarly to the snapshot app, 
