@@ -141,7 +141,7 @@ In my case options 1-2 were not available, 3 is annoying to use, but the FTP por
 The time_zone.sh script is overwritten each time the app finds the server and syncs time. So some simple bash scripting to create a daemon that repairs the exploit when removed solves that.
 1) open ftp terminal from the scripts folder `ftp ftp://root:@192.168.10.191`
 2) `cd /etc/jffs2`
-3) `mput time_zone.sh`, `mput gergehack.sh`, and `mput gergedaemeon.sh`
+3) `mput time_zone.sh`, `mput gergesettings.txt`, `mput gergehack.sh`, and `mput gergedaemeon.sh`
 4) `quit`
 
 reboot the camera, then telnet will be open every time. Connect with: `telnet 192.168.10.191` (root no password)
@@ -172,6 +172,43 @@ Nmap done: 1 IP address (1 host up) scanned in 5.28 seconds
 The ftp port could also be closed by `killall /usr/bin/tcpsvd`, but for hacking it is a nice bonus. Either way the open ports are no longer an issue because the camera is on an isolated VLAN.
 
 The IR filter can also be operated as described [in this file](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/IR_shutter.txt).
+
+# Play Sound
+The camera has `/usr/bin/ak_adec_demo` which allows playing sound files over the built in speaker. There is one small issue, it is waaayyyy too loud and makes the plastic casing resonate horribly, so I recommend lowering the volume of the mp3 file, especially if you use the camera indoors.
+```
+[root@anyka /usr/bin]$ ./ak_adec_demo --help
+usage: ./ak_adec_demo [sample rate] [channel num] [type] [audio file path]
+eg.: ./ak_adec_demo 8000 2 mp3 /mnt/20161123-153020.mp3
+support type: [mp3/amr/aac/g711a/g711u/pcm]
+```
+1) lower the volume of your chosen file `ffmpeg -i Tutturuu.mp3 -af "volume=0.3" Tutturuu_low.mp3` (I went as low as 0.1)
+2) copy the sound file over (and the `ak_adec_demo` if you don't have it) with ftp or just put it on the SD card
+3) play the sound `ak_adec_demo 41100 1 mp3 /etc/jffs2/Tutturuu_low.mp3`
+
+Warning: small audio files and executables should fit in the jffs2, but I recommend using SD storage to be safe.
+
+# Movement with PTZ Daemon
+
+There is a great ptz motion daemon in [the link above](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon) which I was able to compile. My finished executable is provided [here]().
+
+1) open one telnet and run it `./ptz_daemon` (or use gergehack to auto-start it on boot)
+2) open second telnet and home the camera axes `echo "init" >> /tmp/ptz.daemon`
+3) move to whatever position you want `echo "t2p 190 95" >> /tmp/ptz.daemon` 190 degree horizontal, 40 vertical (0 is top)
+4) quit the daemon if you want with `echo "q" >> /tmp/ptz.daemon`, but it can just always run in the background
+
+# How to compile for AK3918?
+
+This is a summary of how the ptz_daemon was compiled. Install the tools:
+```
+sudo apt install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi binutils-arm-linux-gnueabi
+```
+I decided to compile everything I can as static (there is plenty of space on the SD card, so the larger size is worth the convenience on not having to look for all the libraries in the camera system). This makes distribution easy, just download and run it on the camera. I have to mention that I had to look for `.a` [static libraries](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master/akv300-extract/libplat/lib) that I can compile into it.
+
+I used the following command (with static libs copied to libs/ folder):
+
+`arm-linux-gnueabi-g++ ptz_daemon_cpp.cpp -L./libs -ldl -lplat_drv -lplat_common -lplat_thread -lpthread -D_GLIBCXX_USE_CXX11_ABI=0 -static -o ptz_daemon`
+
+Then it is a matter of copy and run on the camera. Instructions to use are on the [original page](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon)
 
 # RTSP
 Using the [Nemobi/Anyka](https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root) repo rtsp demo executable results in a lot of errors. The libs are loaded similarly to the snapshot app, 
