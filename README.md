@@ -8,10 +8,17 @@ My attempt at reverse engineering and making use of a Chinese junk camera
 - Created some scripts that kill the main app and handle wifi connection instead of it
 - I got a permanent exploit (ftp, telnet, ssh, password protected)
 - The camera can now operate in isolation from the internet
-- Found snapshot examples and got bmp image on port 3000 (video not working)
-- PTZ movement and play sound (mic not working)
 - Able to modify the file-system safely (truely permanent)
-- trying to get rtsp working at the moment
+
+### Working features
+- 640x480 bmp snapshot on port 3000
+- (work in progress) video recording
+- Audio playback
+- Audio recording (only pcm raw recording) (work in progress)
+- PTZ movement
+- IR shutter
+
+The goal is trying to get rtsp or onvif video feed working to have a usable camera.
 
 # Info Links
 
@@ -73,6 +80,8 @@ https://github.com/ThatUsernameAlreadyExist/anyka-v4l2rtspserver
 and https://github.com/ThatUsernameAlreadyExist/anyka-software (very recent and promising)
 
 (v4lrtspserver, live555, lighttpd)
+
+https://github.com/Lamobo/Lamobo-D1/tree/master
 
 https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon
 
@@ -189,8 +198,12 @@ Warning: small audio files and executables should fit in the jffs2, but I recomm
 ### Record Sound
 work in progress
 
+I was able to compile a [working audio input demo](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/audio_in_raw_demo) from the [chinese repo here](https://github.com/helloworld-spec/qiwen/tree/main/anycloud39ev300). It is very basic, there are no settings and it just records audio at 8k samples/s for 10s to a raw pcm file. The goal is to get the aenc_demo working and have proper encoded mp3 audio instead of raw pcm. At least the mic is usable.
+
+After getting the file from the camera (over FTP or SD) `ffplay -f s16le -ar 8k -ac 1 19700101-023156.pcm` will play the file.
+
 ### Movement with PTZ Daemon
-There is a great [ptz motion daemon](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon) which I was able to compile. My finished executable is provided [here](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/apps/ptz_daemon).
+There is a great [ptz motion daemon](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon) which I was able to compile. My finished executable is provided [here](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ptz/ptz_daemon).
 
 1) open one telnet and run it `./ptz_daemon` (or use gergehack to auto-start it on boot)
 2) open second telnet and home the camera axes `echo "init" > /tmp/ptz.daemon`
