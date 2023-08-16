@@ -4,7 +4,7 @@ restart_process()
 {
   echo 'restarting snapshot service...'
   export LD_LIBRARY_PATH=/mnt/anyka_hack/snapshot/lib
-  ./mnt/anyka_hack/snapshot/ak_snapshot
+  /mnt/anyka_hack/snapshot/ak_snapshot
 }
 
 check_process_health()

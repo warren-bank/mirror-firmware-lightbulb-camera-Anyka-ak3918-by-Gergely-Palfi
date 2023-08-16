@@ -145,12 +145,29 @@ Nmap done: 1 IP address (1 host up) scanned in 5.03 seconds
 -Telnet port is not open
 
 In my case FTP port was the convenient way in. Laid with red carpet, doors wide open, no password. It just happens that the rw `/etc/jffs2/` folder has `time_zone.sh` which is a prime target for code execution.
+The time_zone.sh script is overwritten each time the app finds the server and syncs time. So some simple bash scripting to create a daemon that repairs the exploit when removed solves that. Additionally, first install of the exploit scripts needs to set execute permission for the new .sh files (this is done my the default `time_zone.sh` provided).
 
-# Permanent back door
-The time_zone.sh script is overwritten each time the app finds the server and syncs time. So some simple bash scripting to create a daemon that repairs the exploit when removed solves that.
-1) open ftp terminal from the scripts folder `ftp ftp://root:@192.168.10.191`
-2) `cd /etc/jffs2`
-3) `mput time_zone.sh`, `mput gergesettings.txt`, `mput gergehack.sh`, and `mput gergedaemeon.sh`
+# Permanent back door & WiFi setup
+It is possible to set up the wifi credentials without ever downloading and registering for the sketchy apps that these cameras come with. When the camera is not able to connect on first setup it will enter access point (AP) mode. You can connect to this AP wifi network and get FTP access.
+
+1) The camera will start making sounds and wait for a QR code from the app
+2) Instead of getting the app just connect to the AP, open ftp terminal from the scripts folder `ftp ftp://root:@192.168.10.1`
+3) `cd /etc/jffs2` and then see files with `ls` there should be a file `anyka_cfg.ini`
+4) `mget anyka_cfg.ini` to pull the file to your computer
+5) fill in your wifi credentials
+
+The file should have something like this (somewhere close to the top)
+
+```
+[wireless]
+ssid                    = MyWifi
+mode                    = Infra
+security                = 3
+password                = mywifipassword
+running                 = softap
+```
+
+6) `mput time_zone.sh`, `mput gergesettings.txt`, `mput gergehack.sh`, and `mput gergedaemeon.sh` (also `mput anyka_cfg.ini` if you need to set up wifi)
 4) `quit`
 
 reboot the camera, then telnet will be open every time. Connect with: `telnet 192.168.10.191` (root, no password)
@@ -177,6 +194,10 @@ All the functions listed here can be enabled in gergesettings.txt and will be la
 
 ### Snapshot
 The [anyka_v380ipcam_experiments](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master) repo has a good Snapshot app that provides `bmp (640x480)` snapshots on `http://IP:3000/Snapshot.bmp`. All files are available for the SD card. I also created a daemon script for this app to make sure it is restarted if crashed (when trying to load a new image too soon)
+
+NOTE: the sd card has `sdcard/CAM/isp` file which needs to be a copy of your `/etc/jffs2/isp_sensor.conf` for whatever sensor you have. (my cam has H63 so that is the default file)
+
+NOTE: the libs folder has a very old `V2.0.03 libakuio.so` which my camera uses. V3.1.01 is much more common, so feel free to replace the libs with [other ones](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master/akv300-extract/libplat/lib).
 
 ### Video
 work in progress
@@ -285,6 +306,18 @@ The point of attention now is `libplat_vi.so` which contains the offending `get_
 insmod: can't insert 'akcamera.ko': unknown symbol in module, or unknown parameter
 insmod: can't insert 'ak_info_dump.ko': unknown symbol in module, or unknown parameter
 ```
+
+# How to use vi (for beginners)
+`vi` is a lightweight vim text editor that is part of busybox on the camera. (this avoids having to copy files over FTP or SD card every time you want to edit)
+1) open the file `vi myfile.txt`
+2) navigate with arrow keys and press `I` for insert edit mode
+3) edit the file as you like
+4) press `esc` to exit insert mode
+5) type `:wq` to write changes and quit, `:q` to quit, `:q!` quit discarding changes
+
+# Little warning (for beginners)
+
+`killall busybox`... causes a reboot. If you are dumb like I am and put that into startup scripts, then it will reboot forever. The way to fix it (without reflashing the stock flash dump) is connect UART and spam ctrl+C when linux loads, this will exit the startup script and the file can be fixed over UART console with `vi`.
 
 # Boot Process Map
 The boot process looks something like this:
