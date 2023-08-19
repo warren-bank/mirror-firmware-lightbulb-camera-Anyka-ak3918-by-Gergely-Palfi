@@ -145,7 +145,7 @@ Nmap done: 1 IP address (1 host up) scanned in 5.03 seconds
 -Telnet port is not open
 
 In my case FTP port was the convenient way in. Laid with red carpet, doors wide open, no password. It just happens that the rw `/etc/jffs2/` folder has `time_zone.sh` which is a prime target for code execution.
-The time_zone.sh script is overwritten each time the app finds the server and syncs time. So some simple bash scripting to create a daemon that repairs the exploit when removed solves that. Additionally, first install of the exploit scripts needs to set execute permission for the new .sh files (this is done my the default `time_zone.sh` provided).
+The time_zone.sh script is overwritten each time the app finds the server and syncs time. So some simple bash scripting to create a daemon that repairs the exploit when removed solves that. Additionally, first install of the exploit scripts needs to set execute permission for the new .sh files (this is done by the default `time_zone.sh` provided).
 
 # Permanent back door & WiFi setup
 It is possible to set up the wifi credentials without ever downloading and registering for the sketchy apps that these cameras come with. When the camera is not able to connect on first setup it will enter access point (AP) mode. You can connect to this AP wifi network and get FTP access.
