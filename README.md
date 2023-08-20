@@ -241,6 +241,18 @@ There is a great [ptz motion daemon](https://github.com/kuhnchris/IOT-ANYKA-PTZd
 
 More instructions to use are on the [original page](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon)
 
+New features added:
+- relative motion 10 degrees (up, down, left, right)
+
+The ptz daemon can now combine relative and absolute motion commands
+
+```
+echo "t2p 300 50">/tmp/ptz.daemon
+echo "up">/tmp/ptz.daemon
+echo "left">/tmp/ptz.daemon
+```
+This moves the camera to position (300,50) then up 10 degrees to (300,40) then left to (290,40)
+
 ### IR filter
 The infra-red filter can be turned on/off in two ways. Using the `ak_drv_ir_demo` as described [here](http://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/IR_shutter.txt), or using the `ptz_daemon` with command `irinit` then `irsetircut 0` or `irsetircut 1` (use with echo as above). Both of these require that the `cmd_serverd` is running, so make sure to set `run_cmd_server=1` in `gergesettings.txt`. For some reason the IR feature is not even mentioned in the original ptz repo documentation, I found it by reading the source.
 
