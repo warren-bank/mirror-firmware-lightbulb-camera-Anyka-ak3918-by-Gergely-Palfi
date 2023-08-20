@@ -17,7 +17,7 @@ At this time it is not possible to get a larger image, only 640x480. (bug?)
 
 ## Usage
 
-Note that you need to chnage the `sensor.ko` to match the one in your camera.
+Note that you need to change the `sensor.ko` to match the one in your camera.
 
 Also make sure that the libs are loaded from the correct place.
 
