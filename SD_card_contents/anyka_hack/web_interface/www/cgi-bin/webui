@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+echo "Content-type: text/html"
+echo ""
+command=`echo "$QUERY_STRING" | awk '{split($0,array,"&")} END{print array[1]}' | awk '{split($0,array,"=")} END{print array[2]}'`
+date=`date`
+ipadd=`ip route get 1 | awk '{print $NF;exit}'`
+uptime=`uptime`
+
+
+cat <<EOT
+<!DOCTYPE html>
+<html>
+<head>
+<title>Camera - WebUI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+    font-size: 100%;
+    font-family: Arial, Verdana, sans-serif;
+}
+</style>
+</head>
+<body>
+<div>
+<img id="snapshot" src="snapshot" />
+<br />
+<br />
+<button onclick="window.location.href='webui?command=ptzinit'" id="home">Init_PTZ</button>
+<br />
+<button onclick="window.location.href='webui?command=irinit'" id="irinit">Init_IR</button>
+<br />
+<br />
+<button onclick="window.location.href='webui?command=iron'" id="irledson">IR Off [ Day ]</button>
+<br />
+<button onclick="window.location.href='webui?command=iroff'" id="irledsoff">IR On [ Night ]</button>
+<br />
+<br />
+</div>
+<table>
+    <tr align="center">
+        <td><button onclick="window.location.href='webui?command=ptzlu'">&#11017;</button></td>
+        <td><button onclick="window.location.href='webui?command=ptzu'">&#11014;</button></td>
+        <td><button onclick="window.location.href='webui?command=ptzru'">&#11016;</button></td>
+    </tr>
+    <tr align="center">
+        <td><button onclick="window.location.href='webui?command=ptzl'">&#11013;</button></td>
+        <td>PTZ</td>
+        <td><button onclick="window.location.href='webui?command=ptzr'">&#10145;</button></td>
+    </tr>
+    <tr align="center">
+        <td><button onclick="window.location.href='webui?command=ptzld'">&#11019;</button></td>
+        <td><button onclick="window.location.href='webui?command=ptzd'">&#11015;</button></td>
+        <td><button onclick="window.location.href='webui?command=ptzrd'">&#11018;</button></td>
+    </tr>
+</table>
+<br />
+Date - $date
+<br />
+IP Address - $ipadd
+<br />
+Uptime - $uptime
+<br />
+<br />
+(diagonal relative motion not yet supported by ptz_daemon) <br /> 
+
+<script>
+setInterval(function() { document.getElementById("snapshot").src = "snapshot?t=" + Math.random(); }, 1500);
+</script>
+
+</body>
+</html>
+EOT
+
+ if [ "$command" = "irinit" ]; then
+  echo "irinit" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "iron" ]; then
+  echo "irsetircut 1" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "iroff" ]; then
+  echo "irsetircut 0" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzinit" ]; then
+  echo "init" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzu" ]; then
+  echo "up" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzd" ]; then
+  echo "down" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzl" ]; then
+  echo "left" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzr" ]; then
+  echo "right" > /tmp/ptz.daemon
+ fi

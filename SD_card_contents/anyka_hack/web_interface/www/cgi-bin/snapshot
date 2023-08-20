@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+echo "Content-type: image/bmp"
+echo ""
+cat /tmp/preview.bmp
+export LD_LIBRARY_PATH=/mnt/anyka_hack/web_interface/lib
+/mnt/anyka_hack/web_interface/curl 127.0.0.1:3000/pic.jpg > /dev/null 2>/dev/null

@@ -17,14 +17,13 @@ My attempt at reverse engineering and making use of a Chinese junk camera
 - Audio recording (only pcm raw recording) (work in progress)
 - PTZ movement
 - IR shutter
+- combined web interface with ptz, IR and image on port 8080
 
 The goal is trying to get rtsp or onvif video feed working to have a usable camera.
 
 # Info Links
 
 ## Cool info:
-
-https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master
 
 https://github.com/JayGoldberg/anyka-cams
 
@@ -80,6 +79,8 @@ https://github.com/ThatUsernameAlreadyExist/anyka-v4l2rtspserver
 and https://github.com/ThatUsernameAlreadyExist/anyka-software (very recent and promising)
 
 (v4lrtspserver, live555, lighttpd)
+
+https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master (ak_snapshot original)
 
 https://github.com/Lamobo/Lamobo-D1/tree/master
 
@@ -193,11 +194,18 @@ Dropbear can give ssh access if telnet is not your preference.
 All the functions listed here can be enabled in gergesettings.txt and will be launched at boot.
 
 ### Snapshot
-The [anyka_v380ipcam_experiments](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master) repo has a good Snapshot app that provides `bmp (640x480)` snapshots on `http://IP:3000/Snapshot.bmp`. All files are available for the SD card. I also created a daemon script for this app to make sure it is restarted if crashed (when trying to load a new image too soon)
+The [anyka_v380ipcam_experiments](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master) repo has a good Snapshot app that provides `bmp (640x480)` snapshots on `http://IP:3000/Snapshot.bmp`. All files including libs are available for the SD card. I also created a daemon script for this app to make sure it is restarted if crashed (when trying to load a new image too soon)
 
-NOTE: the sd card has `sdcard/CAM/isp` file which needs to be a copy of your `/etc/jffs2/isp_sensor.conf` for whatever sensor you have. (my cam has H63 so that is the default file)
+If not using the `gergehack.sh` script it can be still started with `./snapshot_daemon`
+
+<s>NOTE: for the original app by ricardojlrufino the sd card has `/mnt/sdcard/CAM/isp` file which needs to be a copy of your `/etc/jffs2/isp_sensor.conf` for whatever sensor you have. (my cam has H63 so that is the default file)</s>
+UPDATE: my version of `ak_snapshot` stores the isp file next to the executable in `/mnt/anyka_hack/snapshot/isp.conf` (my cam has H63 so that is the default file) copy of your `/etc/jffs2/isp_sensor.conf`
+
+![ak_snapshot](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/raw/branch/main/Images/ak_snapshot.png)
 
 NOTE: the libs folder has a very old `V2.0.03 libakuio.so` which my camera uses. V3.1.01 is much more common, so feel free to replace the libs with [other ones](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master/akv300-extract/libplat/lib).
+
+[more info about my modified ak_snapshot version](http://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot)
 
 ### Video
 work in progress
@@ -236,6 +244,12 @@ More instructions to use are on the [original page](https://github.com/kuhnchris
 ### IR filter
 The infra-red filter can be turned on/off in two ways. Using the `ak_drv_ir_demo` as described [here](http://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/IR_shutter.txt), or using the `ptz_daemon` with command `irinit` then `irsetircut 0` or `irsetircut 1` (use with echo as above). Both of these require that the `cmd_serverd` is running, so make sure to set `run_cmd_server=1` in `gergesettings.txt`. For some reason the IR feature is not even mentioned in the original ptz repo documentation, I found it by reading the source.
 
+### Web Interface
+
+I created a combined web interface using the features from `ptz_daemon`, `ak_snapshot`, and `busybox httpd`. The webpage is based on [another Chinese camera hack for Goke processors](https://github.com/dc35956/gk7102-hack).
+
+![web_interface](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/raw/branch/main/Images/web_interface.png)
+
 # Somewhat functional
 With the main anyka_ipc app and daemon listening processes removed, as well as the simple snapshot capability and telnet ports added the portscan looks like this:
 ```
@@ -255,6 +269,8 @@ The ftp port could also be closed by `killall /usr/bin/tcpsvd`, but for hacking 
 
 # How to compile for AK3918?
 
+## The Simple Dirty Way
+
 This is a summary of how the ptz_daemon was compiled. Install the tools:
 ```
 sudo apt install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi binutils-arm-linux-gnueabi
@@ -265,9 +281,45 @@ I used the following command (with static libs copied to libs/ folder):
 
 `arm-linux-gnueabi-g++ ptz_daemon_cpp.cpp -L./libs -ldl -lplat_drv -lplat_common -lplat_thread -lpthread -D_GLIBCXX_USE_CXX11_ABI=0 -static -o ptz_daemon`
 
-Then it is a matter of copy and run on the camera.
+Then it is a matter of copy and run on the camera. (because the executable is static, there are no dependencies to worry about)
 
 (PS: I still need to learn how to properly use libraries and compile with dynamic libs, this is my first time using gcc)
+
+## The Proper Way (anyka cross-compile with libs)
+
+The cross-compiler is 32bit so using an older OS for better support is worth it. (maybe could even use a 32bit system, but this example is with running 32bit on 64bit linux)
+
+These steps are based on translating [chinese instructions](https://github.com/helloworld-spec/qiwen/blob/main/anycloud39ev300/SDK/Quick%20Start%20Guide.txt) of the SDK.
+
+- Ubuntu 16.04 live USB (so I don't destroy my distro)
+- connect to internet for install
+- `dpkg --add-architecture i386`
+- `sudo apt update`
+- `sudo apt install git libc6:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386`
+- `git clone https://github.com/helloworld-spec/qiwen.git`
+- `sudo tar -Pxvf  anyka_uclibc_gcc.tar.bz2` (this will set up the compiler in /opt/)
+
+These steps are included in a convenient bash script that can be launched on the live OS after connecting to internet.
+
+to use the compiler:
+- `export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin`
+- test with `arm-anykav200-linux-uclibcgnueabi-gcc –v`
+
+# Compile example using cross compiler:
+This is an example of how to compile the `ak_snapshot` app from start to finish
+
+- Start a live USB version of Ubuntu 16.04 (other versions may work too, not tested)
+- Connect to the internet
+- copy `setup.sh` and the source code `anyka_v380ipcam_experiments` to the home folder `/home/ubuntu`
+- open terminal in home folder and run `./setup.sh` (when it is done it should print the gcc version of the anyka compiler)
+- copy the last line `export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin`
+- `cd anyka_v380ipcam_experiments/apps/ak_snapshot/`
+- paste `export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin`
+- `./build` (the compiled `ak_snapshot` will appear)
+- you can now put the new app on the camera using FTP and run it
+
+[more info about ak_snapshot](http://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot)
+
 
 # Modify file-system
 The camera runs on squashfs, so it will be read-only. However, we can create a new squashfs filesystem with modified files and overwrite the current one with `updater`.
@@ -306,6 +358,24 @@ The point of attention now is `libplat_vi.so` which contains the offending `get_
 insmod: can't insert 'akcamera.ko': unknown symbol in module, or unknown parameter
 insmod: can't insert 'ak_info_dump.ko': unknown symbol in module, or unknown parameter
 ```
+
+# How to move files to and from the camera (for beginners)
+
+There are two ways to move files between the computer and camera.
+
+1) using the SD card
+2) over FTP
+
+Using the SD card to transfer files has many drawbacks.
+- Every time you remove the SD card the camera needs to be powered off (to make sure the SD card is not corrupted and that apps are not using it)
+- Constantly move the card between the camera and computer every time you make a change (lot of effort for small files, not ideal for testing)
+- Only one device has access to the files at a time
+
+The easy way I recommend is using FTP.
+- You can share files with multiple computers at the same time (I use a separate computer for cross-compiling)
+- You can open the ftp share in a folder using Nautilus or Dolphin and edit files on the camera.
+- You can send or grab files quickly from terminal
+- Files/apps can be updated quickly (compile, stop the app on camera, replace app, start new version of app) while other apps are still using the SD card
 
 # How to use vi (for beginners)
 `vi` is a lightweight vim text editor that is part of busybox on the camera. (this avoids having to copy files over FTP or SD card every time you want to edit)

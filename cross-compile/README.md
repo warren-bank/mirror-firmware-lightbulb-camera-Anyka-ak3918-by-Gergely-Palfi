@@ -18,3 +18,13 @@ These steps are included in a convenient bash script that can be launched on the
 - test with `arm-anykav200-linux-uclibcgnueabi-gcc –v`
 
 # Compile example:
+This is an example of how to compile the `ak_snapshot` app from start to finish
+
+- Start a live USB version of Ubuntu 16.04 (other versions may work too, not tested)
+- Connect to the internet
+- copy `setup.sh` and the source code `anyka_v380ipcam_experiments` to the home folder `/home/ubuntu`
+- open terminal in home folder and run `./setup.sh` (when it is done it should print the gcc version of the anyka compiler)
+- copy the last line `export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin`
+- `cd anyka_v380ipcam_experiments/apps/ak_snapshot/`
+- paste `export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin`
+- `./build` (the compiled `ak_snapshot` will appear)
