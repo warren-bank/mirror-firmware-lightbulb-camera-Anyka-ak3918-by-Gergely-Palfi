@@ -277,7 +277,14 @@ PORT     STATE SERVICE
 
 Nmap done: 1 IP address (1 host up) scanned in 5.28 seconds
 ```
-The ftp port could also be closed by `killall /usr/bin/tcpsvd`, but for hacking it is a nice bonus. Either way the open ports are no longer an issue because the camera is on an isolated VLAN and we can set passwords.
+possible feature ports from this repo:
+- FTP (port 21) password protected
+- dropbear ssh (port 22) password protected
+- telnet (port 23) password protected
+- screenshot (port 3000)
+- web interface (port 8080)
+
+The `gergesettings.txt` file determines which of these services/ports are available. Either way the open ports are no longer an issue because the camera is on an isolated VLAN and we can set passwords.
 
 # How to compile for AK3918?
 
