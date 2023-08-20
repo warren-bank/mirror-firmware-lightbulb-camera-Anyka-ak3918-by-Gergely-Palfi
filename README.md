@@ -205,7 +205,7 @@ UPDATE: my version of `ak_snapshot` stores the isp file next to the executable i
 
 NOTE: the libs folder has a very old `V2.0.03 libakuio.so` which my camera uses. V3.1.01 is much more common, so feel free to replace the libs with [other ones](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master/akv300-extract/libplat/lib).
 
-[more info about my modified ak_snapshot version](http://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot)
+[more info about my modified ak_snapshot version](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot)
 
 ### Video
 work in progress
@@ -337,7 +337,7 @@ This is an example of how to compile the `ak_snapshot` app from start to finish
 - `./build` (the compiled `ak_snapshot` will appear)
 - you can now put the new app on the camera using FTP and run it
 
-[more info about ak_snapshot](http://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot)
+[more info about ak_snapshot](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot)
 
 
 # Modify file-system
