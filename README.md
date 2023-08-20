@@ -232,7 +232,7 @@ I was able to compile a [working audio input demo](https://gitea.raspiweb.com:20
 After getting the file from the camera (over FTP or SD) `ffplay -f s16le -ar 8k -ac 1 19700101-023156.pcm` will play the file.
 
 ### Movement with PTZ Daemon
-There is a great [ptz motion daemon](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon) which I was able to compile. My finished executable is provided [here](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ptz/ptz_daemon).
+There is a great [ptz motion daemon](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon) which I was able to compile. My finished executable is provided [here](https://gitea.raspiweb.com:2053/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ptz/ptz_daemon). UPDATE: my version has extra features such as relative motion (up, down, left, right). Source is also provided.
 
 1) open one telnet and run it `./ptz_daemon` (or use gergehack to auto-start it on boot)
 2) open second telnet and home the camera axes `echo "init" > /tmp/ptz.daemon`
