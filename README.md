@@ -11,15 +11,41 @@ My attempt at reverse engineering and making use of a Chinese junk camera
 - Able to modify the file-system safely (truely permanent)
 
 ### Working features
+- RTSP stream (720p on http://IP:554/vs0)
 - 640x480 bmp snapshot on port 3000
-- (work in progress) video recording
+- (work in progress) local video recording
 - Audio playback
 - Audio recording (only pcm raw recording) (work in progress)
 - PTZ movement
 - IR shutter
-- combined web interface with ptz, IR and image on port 8080
+- combined web interface with ptz and IR on port 80
 
-The goal is trying to get rtsp or onvif video feed working to have a usable camera.
+The camera can now be connected to a video recorder or monitor software such as MotionEye.
+
+# Quick Start
+This is not recommended for people that have zero experience with terminal. Everything you do using this code is at your own risk.
+
+1) get a telnet connection as described below
+
+(no SD card needed for this part, we are not running apps yet)
+It is recommended to have a UART connection as a backup and to monitor what the camera is doing.
+
+check settings first -> turn off everything except wifi FTP and telnet, and set `rootfs_modified=0`
+
+install the hack over ftp
+
+reboot after files are copied
+
+**The camera most likely will work fine now without rootfs modification, but it may not always be able to halt the anyka_ipc application from starting**
+What this means is that you can stop here if you are too affraid to break the camera. It will work the same, just not 100% reliably, but a reboot can fix that.
+
+2) modify the rootfs as described below over telnet connection
+
+It is recommended to have a UART connection as a backup and to monitor what the camera is doing.
+
+3) After the rootfs is modified adjust the settings `rootfs_modified=1` with the SD card. Using the [update](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/exploit_scripts) of the script
+
+4) Enjoy a fully private camera and enable the apps you want.
 
 # Info Links
 
@@ -42,7 +68,7 @@ https://boschko.ca/hardware_hacking_yo_male_fertility/ (weird, but ok)
 
 Discussion:
 
-https://github.com/e27-camera-hack/E27-Camera-Hack/discussions/1
+https://github.com/e27-camera-hack/E27-Camera-Hack/discussions/1 (discussion where most of this was worked on)
 
 https://github.com/alienatedsec/yi-hack-v5/discussions/236
 
@@ -88,6 +114,8 @@ https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon
 
 https://blog.caller.xyz/v380-ipcam-firmware-patching/
 
+https://github.com/MuhammedKalkan/Anyka-Camera-Firmware (RTSP)
+
 ## Other resources
 
 https://www.linux4sam.org/bin/view/Linux4SAM/UsingIsi?skin=print.myskin
@@ -118,7 +146,7 @@ For software to connect anything works:
 This potentially gives access to U-Boot, but in my case boot delay is zero, so could not get in. This port provides essential information about the boot process and helps with debugging when errors are reported here. Also, when the boot process is complete and messages calm down, it can be used as a backup console (if for example wifi fails, or got locked out for some reason).
 
 # First power on
-Not knowng much about the camera (have not analysed the flash dump yet), just set up the camera as usual with the broken english translated instructions. Now looking back at it, this is not necessary as FTP access should still work in AP mode and from then onward the wifi password (`/etc/jffs2/anyka_cfg.ini`) and exploit scripts can be inserted.
+Not knowing much about the camera (have not analysed the flash dump yet), just set up the camera as usual with the broken english translated instructions. Now looking back at it, this is not necessary as FTP access should still work in AP mode and from then onward the wifi password (`/etc/jffs2/anyka_cfg.ini`) and exploit scripts can be inserted.
 
 # Getting In
 Based on the general info online there are 3 ways in
@@ -157,7 +185,7 @@ It is possible to set up the wifi credentials without ever downloading and regis
 4) `mget anyka_cfg.ini` to pull the file to your computer
 5) fill in your wifi credentials
 
-The file should have something like this (somewhere close to the top)
+The file should have something like this (somewhere close to the top) NOTE: some special characters don't work in SSID and passowrd
 
 ```
 [wireless]
@@ -346,14 +374,20 @@ The camera runs on squashfs, so it will be read-only. However, we can create a n
 This process works for rootfs (`mtdblock4`) and usrfs (`mtdblock5`). `mtdblock6` is jffs2, which you can edit anyway.
 
 1) `[root@anyka /mnt]$ cat /dev/mtdblock4 > /mnt/mtdblock4.bin`
-2) `unsquashfs mtdblock4.bin`
+
+compare your rootfs `mtdblock4.bin` with the one in this repo (diff file1 file2), if it is the same you can just use the prepared `newroot.sqsh4` and skip to step 4.
+
+2) `unsquashfs mtdblock4.bin` (if not installed `sudo apt install squashfs-tools`)
+
+modify `/etc/init.d/rc.local` to not launch `/usr/sbin/service.sh` and `/usr/sbin/camera.sh`
+
 3) `mksquashfs squashfs-root newroot.sqsh4 -b 131072 -comp xz -Xdict-size 100%`
 4) `[root@anyka /mnt]$ updater local A=/mnt/newroot.sqsh4`
 
 more detailed process [here](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot/updater.txt)
 
 # RTSP
-work in progress
+Many thanks to [MuhammedKalkan](https://github.com/MuhammedKalkan/Anyka-Camera-Firmware). This is now working with 720p video and automatic IR.
 
 Using the [Nemobi/Anyka](https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root) repo rtsp demo executable results in a lot of errors. The libs are loaded similarly to the snapshot app, 
 

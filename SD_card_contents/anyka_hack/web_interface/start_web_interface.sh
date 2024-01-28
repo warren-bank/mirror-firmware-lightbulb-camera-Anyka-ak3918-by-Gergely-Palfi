@@ -4,7 +4,7 @@ restart_process()
 {
   echo 'restarting web interface...'
   export LD_LIBRARY_PATH=/mnt/anyka_hack/web_interface/lib
-  /mnt/anyka_hack/web_interface/busybox httpd -p 8080 -h /mnt/anyka_hack/web_interface/www
+  /mnt/anyka_hack/web_interface/busybox httpd -p 80 -h /mnt/anyka_hack/web_interface/www
 }
 
 check_process_health()

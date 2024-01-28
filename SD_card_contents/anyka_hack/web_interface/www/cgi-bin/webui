@@ -23,7 +23,7 @@ body {
 </head>
 <body>
 <div>
-<img id="snapshot" src="snapshot" />
+
 <br />
 <br />
 <button onclick="window.location.href='webui?command=ptzinit'" id="home">Init_PTZ</button>
@@ -62,7 +62,6 @@ IP Address - $ipadd
 Uptime - $uptime
 <br />
 <br />
-(diagonal relative motion not yet supported by ptz_daemon) <br /> 
 
 <script>
 setInterval(function() { document.getElementById("snapshot").src = "snapshot?t=" + Math.random(); }, 1500);
@@ -73,16 +72,16 @@ setInterval(function() { document.getElementById("snapshot").src = "snapshot?t="
 EOT
 
  if [ "$command" = "irinit" ]; then
-  echo "irinit" > /tmp/ptz.daemon
+  echo "init_ir" > /tmp/ptz.daemon
  fi
  if [ "$command" = "iron" ]; then
-  echo "irsetircut 1" > /tmp/ptz.daemon
+  echo "set_ir_cut 1" > /tmp/ptz.daemon
  fi
  if [ "$command" = "iroff" ]; then
-  echo "irsetircut 0" > /tmp/ptz.daemon
+  echo "set_ir_cut 0" > /tmp/ptz.daemon
  fi
  if [ "$command" = "ptzinit" ]; then
-  echo "init" > /tmp/ptz.daemon
+  echo "init_ptz" > /tmp/ptz.daemon
  fi
  if [ "$command" = "ptzu" ]; then
   echo "up" > /tmp/ptz.daemon
@@ -95,4 +94,16 @@ EOT
  fi
  if [ "$command" = "ptzr" ]; then
   echo "right" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzru" ]; then
+  echo "right_up" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzrd" ]; then
+  echo "right_down" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzlu" ]; then
+  echo "left_up" > /tmp/ptz.daemon
+ fi
+ if [ "$command" = "ptzld" ]; then
+  echo "left_down" > /tmp/ptz.daemon
  fi

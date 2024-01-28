@@ -34,6 +34,31 @@ std::vector<std::string> splitString(const std::string &str, char delim) {
   return tokens;
 }
 
+void relative_up(){
+  std::cout << "turn up" << "\n";
+  if (ypos >= relativemove){
+    ypos -= relativemove;
+  }
+}
+void relative_down(){
+  std::cout << "turn down" << "\n";
+  if (ypos <= 120-relativemove){
+    ypos += relativemove;
+  }
+}
+void relative_left(){
+  std::cout << "turn left" << "\n";
+  if (xpos >= relativemove){
+    xpos -= relativemove;
+  }
+}
+void relative_right(){
+  std::cout << "turn right" << "\n";
+  if (xpos <= 350-relativemove){
+    xpos += relativemove;
+  }
+}
+
 void process_command(const std::string l) {
   std::cout << "spawned processing command thread."
             << "\n";
@@ -44,97 +69,97 @@ void process_command(const std::string l) {
     std::cout << i << "\n";
   }
 
-  if (cmd[0] == "init") {
-    std::cout << "init ptz driver (anyka)"
-              << "\n";
-    ak_drv_ptz_open();
-    ak_drv_ptz_check_self(0);
-    ak_drv_ptz_set_degree(0x168, 0xc0);
-    ak_drv_ptz_set_angle_rate(0x40000000, 0x40000000);
-    xpos = 180;
-    ypos = 90;
-  } else if (cmd[0] == "setar") {
-    std::cout << "set angle rate"
-              << "\n";
-    ak_drv_ptz_set_angle_rate(atoll(cmd[1].c_str()), atoll(cmd[2].c_str()));
-  } else if (cmd[0] == "setdeg") {
-    std::cout << "set degree"
-              << "\n";
-    ak_drv_ptz_set_degree(atoll(cmd[1].c_str()), atoll(cmd[2].c_str()));
-
-  } else if (cmd[0] == "t2p") {
-    std::cout << "turn to position"
-              << "\n";
-    xpos = atoll(cmd[1].c_str());
-    ypos = atoll(cmd[2].c_str());
-    ak_drv_ptz_turn_to_pos(xpos, ypos);
+  //    __________________________________________________
+  //   |                                                  |
+  //   |                      GENERAL                     |
+  //   |________________________--________________________|
+  if (cmd[0] == "q") { //quit
+      shuttingDown = 1;
+  //    __________________________________________________
+  //   |                                                  |
+  //   |                 PTZ MOTOR MOTION                 |
+  //   |________________________--________________________|
+  } else if (cmd[0] == "init_ptz") {
+      std::cout << "init ptz driver (anyka)" << "\n";
+      ak_drv_ptz_open();
+      ak_drv_ptz_check_self(0);
+      ak_drv_ptz_set_degree(0x168, 0xc0); //360 horizontal, 192 vertical
+      ak_drv_ptz_set_angle_rate(0x40000000, 0x40000000);
+      xpos = 180;
+      ypos = 90;
+  // } else if (cmd[0] == "set_ar") {
+  //     std::cout << "set angle rate" << "\n";
+  //     ak_drv_ptz_set_angle_rate(atoll(cmd[1].c_str()), atoll(cmd[2].c_str()));
+  // } else if (cmd[0] == "set_deg") {
+  //     std::cout << "set degree" << "\n";
+  //     ak_drv_ptz_set_degree(atoll(cmd[1].c_str()), atoll(cmd[2].c_str()));
+  // } else if (cmd[0] == "set_speed") {
+  //     std::cout << "set speed (motor, speed)" << "\n";
+  //     ak_drv_ptz_set_speed(atoll(cmd[1].c_str()), atoll(cmd[2].c_str()), 0, 0);
   } else if (cmd[0] == "up") {
-    std::cout << "turn up"
-              << "\n";
-    if (ypos >= relativemove){
-      ypos -= relativemove;
-    }
-    ak_drv_ptz_turn_to_pos(xpos, ypos);
+      relative_up();
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
   } else if (cmd[0] == "down") {
-    std::cout << "turn down"
-              << "\n";
-    if (ypos <= 120-relativemove){
-      ypos += relativemove;
-    }
-    ak_drv_ptz_turn_to_pos(xpos, ypos);
+      relative_down();
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
   } else if (cmd[0] == "left") {
-    std::cout << "turn left"
-              << "\n";
-    if (xpos >= relativemove){
-      xpos -= relativemove;
-    }
-    ak_drv_ptz_turn_to_pos(xpos, ypos);
+      relative_left();
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
   } else if (cmd[0] == "right") {
-    std::cout << "turn right"
-              << "\n";
-    if (xpos <= 350-relativemove){
-      xpos += relativemove;
-    }
-    ak_drv_ptz_turn_to_pos(xpos, ypos);
-  } else if (cmd[0] == "setspeed") {
-    std::cout << "set speed (motor, speed)"
-              << "\n";
-    ak_drv_ptz_set_speed(atoll(cmd[1].c_str()), atoll(cmd[2].c_str()), 0, 0);
-  } else if (cmd[0] == "irgettres") {
-    std::cout << "ir get treshold"
-              << "\n";
-    int a = ak_drv_ir_get_threshold(0, 0);
-    std::cout << "ir get treshold: " << a << "\n";
-  } else if (cmd[0] == "irinit") {
-    std::cout << "ir init"
-              << "\n";
-    ak_drv_ir_init();
-  } else if (cmd[0] == "irgetinputlevel") {
-    std::cout << "get ir input level"
-              << "\n";
-    int a = ak_drv_ir_get_input_level(0, 0, 0, 0);
-
-    std::cout << "get ir input level: " << a << "\n";
-  } else if (cmd[0] == "irsetcheckmode") {
-    std::cout << "ir set checkmode"
-              << "\n";
-    ak_drv_ir_set_check_mode(atoi(cmd[1].c_str()));
-  } else if (cmd[0] == "irsetircut") {
-    std::cout << "ir set ircut " << cmd[1] << "\n";
-    ak_drv_ir_set_ircut(atoi(cmd[1].c_str()));
-  } else if (cmd[0] == "irsettres") {
-    std::cout << "ir set treshold " << cmd[1] << "\n";
-    ak_drv_ir_set_threshold((void *)cmd[1].c_str(), (void *)cmd[2].c_str());
-  } else if (cmd[0] == "t") {
-    std::cout << "turn"
-              << "\n";
-    ak_drv_ptz_turn(atoll(cmd[1].c_str()), atoll(cmd[2].c_str()), 0);
-
-  } else if (cmd[0] == "q") {
-    shuttingDown = 1;
-  } else if (cmd[0] == "ping") {
-    std::cout << "pong"
-              << "\n";
+      relative_right();
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
+  } else if (cmd[0] == "right_up") {
+      relative_right();
+      relative_up();
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
+  } else if (cmd[0] == "right_down") {
+      relative_right();
+      relative_down();
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
+  } else if (cmd[0] == "left_up") {
+      relative_left();
+      relative_up();
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
+  } else if (cmd[0] == "left_down") {
+      relative_left();
+      relative_down();
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
+  } else if (cmd[0] == "t2p") {
+      std::cout << "turn to position" << "\n";
+      xpos = atoll(cmd[1].c_str());
+      ypos = atoll(cmd[2].c_str());
+      ak_drv_ptz_turn_to_pos(xpos, ypos);
+  // } else if (cmd[0] == "t") {
+  //     std::cout << "turn" << "\n";
+  //     ak_drv_ptz_turn(atoll(cmd[1].c_str()), atoll(cmd[2].c_str()), 0);
+  //    __________________________________________________
+  //   |                                                  |
+  //   |                        IR                        |
+  //   |________________________--________________________|
+  } else if (cmd[0] == "init_ir") {
+      std::cout << "ir init" << "\n";
+      ak_drv_ir_init();
+  } else if (cmd[0] == "get_ir_in_lev") {
+      int a = ak_drv_ir_get_input_level(0, 0, 0, 0);
+      std::cout << "IR input level is: " << a << "\n";
+  } else if (cmd[0] == "get_ir_thres") {
+      int a = ak_drv_ir_get_threshold(0, 0);
+      std::cout << "IR threshold is: " << a << "\n";
+  } else if (cmd[0] == "set_ir_thres") {
+      std::cout << "set IR threshold " << cmd[1] << "\n";
+      ak_drv_ir_set_threshold((void *)cmd[1].c_str(), (void *)cmd[2].c_str());
+  } else if (cmd[0] == "set_ir_cut") {
+      std::cout << "set IR cut " << cmd[1] << "\n";
+      ak_drv_ir_set_ircut(atoi(cmd[1].c_str()));
+  } else if (cmd[0] == "set_ir_checkmode") {
+      std::cout << "set IR checkmode" << "\n";
+      ak_drv_ir_set_check_mode(atoi(cmd[1].c_str()));
+  //    __________________________________________________
+  //   |                                                  |
+  //   |                      OTHER                       |
+  //   |________________________--________________________|
+  } else if (cmd[0] == "ping") {                         //ping
+      std::cout << "pong" << "\n";
   }
   commandThreadDone = 1;
 }
@@ -198,8 +223,8 @@ int main(int argc, char **argv) {
       std::cout << "previous job is still running...\n";
     } else {
     }
-    std::cout << "there are currently " << operations.size()
-              << " operations in queue.\n";
+    // std::cout << "there are currently " << operations.size()
+    //           << " operations in queue.\n";
 
     sleep(1);
   }
