@@ -22,7 +22,11 @@ My attempt at reverse engineering and making use of a Chinese junk camera
 
 The camera can now be connected to a video recorder or monitor software such as MotionEye.
 
-# Quick Start
+# Quick Start SD card hack
+
+This hack runs only when the SD card is inserted leaving the camera unmodified. It is beginner friendly, and requires zero coding/terminal skills. See more [here](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/Factory)
+
+# Permanent Hack
 This is not recommended for people that have zero experience with terminal. Everything you do using this code is at your own risk.
 
 1) get a telnet connection as described below
@@ -310,7 +314,7 @@ possible feature ports from this repo:
 - dropbear ssh (port 22) password protected
 - telnet (port 23) password protected
 - screenshot (port 3000)
-- web interface (port 8080)
+- web interface (port 80)
 
 The `gergesettings.txt` file determines which of these services/ports are available. Either way the open ports are no longer an issue because the camera is on an isolated VLAN and we can set passwords.
 
