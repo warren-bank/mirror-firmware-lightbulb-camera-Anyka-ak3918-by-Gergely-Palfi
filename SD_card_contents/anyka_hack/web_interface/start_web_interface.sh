@@ -16,6 +16,8 @@ check_process_health()
   fi
 }
 
+/mnt/anyka_hack/web_interface/set_time.sh &
+
 #load kernel modules for camera
 #insmod /usr/modules/sensor_h63.ko
 #insmod /usr/modules/akcamera.ko

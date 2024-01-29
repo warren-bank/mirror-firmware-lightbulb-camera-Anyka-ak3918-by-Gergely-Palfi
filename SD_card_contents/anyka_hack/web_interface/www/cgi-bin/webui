@@ -63,9 +63,6 @@ Uptime - $uptime
 <br />
 <br />
 
-<script>
-setInterval(function() { document.getElementById("snapshot").src = "snapshot?t=" + Math.random(); }, 1500);
-</script>
 
 </body>
 </html>
