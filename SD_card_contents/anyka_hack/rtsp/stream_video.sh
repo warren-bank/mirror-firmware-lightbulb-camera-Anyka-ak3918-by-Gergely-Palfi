@@ -4,7 +4,7 @@ start_process()
 {
   echo 'starting rtsp service...'
   export LD_LIBRARY_PATH=/mnt/anyka_hack/rtsp/lib
-  /mnt/anyka_hack/rtsp/rtsp
+  /mnt/anyka_hack/rtsp/rtsp &
 }
 
 #load kernel modules for camera
