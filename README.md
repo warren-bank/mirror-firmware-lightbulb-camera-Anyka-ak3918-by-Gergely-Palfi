@@ -26,30 +26,26 @@ The camera can now be connected to a video recorder or monitor software such as 
 
 This hack runs only when the SD card is inserted leaving the camera unmodified. It is beginner friendly, and requires zero coding/terminal skills. See more [here](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/Factory)
 
+It is unlikely that this can cause any harm to your camera as the system remains original, but no matter how small the risk it is never zero (unless you have the exact same camera). Try any of these hacks at your own risk.
+
 # Permanent Hack
-This is not recommended for people that have zero experience with terminal. Everything you do using this code is at your own risk.
+This part is optional.
+The SD hack should launch telnet. Connect with `telnet IP` (user: root, no password)
 
-1) get a telnet connection as described below
+- `[root@anyka /mnt]$ cat /dev/mtdblock4 > /mnt/mtdblock4.bin`
+- Compare your rootfs `mtdblock4.bin` on the SD card with the one in this repo (`diff file1 file2`), if it is the same you can just use the prepared `newroot.sqsh4` and skip to updating.
+- `unsquashfs mtdblock4.bin` (if not installed `sudo apt install squashfs-tools`) this unpacks to `squashfs-root` folder
+- Modify `/etc/init.d/rc.local` to not launch `/usr/sbin/service.sh` and `/usr/sbin/camera.sh`, instead add a line `/etc/jffs2/gergehack.sh`
+- `mksquashfs squashfs-root newroot.sqsh4 -b 131072 -comp xz -Xdict-size 100%` and copy that newly packed `newroot.sqsh4` to your SD card
+- Install the modified rootfs with `[root@anyka /mnt]$ updater local A=/mnt/newroot.sqsh4`
 
-(no SD card needed for this part, we are not running apps yet)
-It is recommended to have a UART connection as a backup and to monitor what the camera is doing.
+more detailed process log [here](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot/updater.txt)
 
-check settings first -> turn off everything except wifi FTP and telnet, and set `rootfs_modified=0`
+After the rootfs is modified, power off the camera and take out the SD card. `Factory` folder can be deleted, the new place for `gergesettings.txt` is in `anyka_hack`. Adjust the settings `rootfs_modified=1`. The settings will be applied using the [update](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/exploit_scripts) of the script from `anyka_hack` folder.
 
-install the hack over ftp
+Enjoy a fully private camera and enable the apps you want.
 
-reboot after files are copied
-
-**The camera most likely will work fine now without rootfs modification, but it may not always be able to halt the anyka_ipc application from starting**
-What this means is that you can stop here if you are too affraid to break the camera. It will work the same, just not 100% reliably, but a reboot can fix that.
-
-2) modify the rootfs as described below over telnet connection
-
-It is recommended to have a UART connection as a backup and to monitor what the camera is doing.
-
-3) After the rootfs is modified adjust the settings `rootfs_modified=1` with the SD card. Using the [update](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/exploit_scripts) of the script
-
-4) Enjoy a fully private camera and enable the apps you want.
+**The rest of this repository was written during development and may not be up to date according to the latest user-friendly hack solution.**
 
 # Info Links
 

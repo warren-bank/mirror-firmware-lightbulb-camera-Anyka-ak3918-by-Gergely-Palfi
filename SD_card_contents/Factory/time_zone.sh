@@ -1,1 +1,0 @@
-../../exploit_scripts/time_zone.sh
