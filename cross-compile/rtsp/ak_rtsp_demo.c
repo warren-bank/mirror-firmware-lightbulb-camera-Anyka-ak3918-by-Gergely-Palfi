@@ -403,7 +403,7 @@ int main(int argc, char **argv)
 
 	register_signal();
 
-	while( ( i_option = getopt_long( argc , argv , "ha:b:c:d:e:f:g:i:j:k:l:m:n:o:p:q:r:" , option_long , NULL ) ) != -1 ) {
+	while( ( i_option = getopt_long( argc , argv , "h:a:b:c:d:e:f:g:i:j:k:l:m:n:o:p:q:r" , option_long , NULL ) ) != -1 ) {
 		switch( i_option ) {
 			case 'h' :
 				help_hint( ) ;
@@ -522,6 +522,8 @@ int main(int argc, char **argv)
 	ak_rtsp_start(VIDEO_CHN_SUB);
 
 	init_other_platform();
+
+	ak_vi_set_flip_mirror(vi_handle, 1, 1); //flip (vertical) and mirror (horizontal) = turn 180 degrees
 
 	run_flag = AK_TRUE;
 

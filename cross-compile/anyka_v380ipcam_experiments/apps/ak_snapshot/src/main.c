@@ -212,7 +212,7 @@ void capture_loop(){
 			ak_vi_release_frame(vi_handle, &frame);
 
 		} else {
-	        // not ready， sleep to release CPU
+			// not ready， sleep to release CPU
 			ak_sleep_ms(10);
 		}
 

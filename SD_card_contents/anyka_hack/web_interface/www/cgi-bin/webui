@@ -25,6 +25,10 @@ body {
 <div>
 
 <br />
+RTSP stream Main: rtsp://$ipadd:544/vs0 (720p)
+<br />
+RTSP stream Sub: rtsp://$ipadd:544/vs1 (480p)
+<br />
 <br />
 <button onclick="window.location.href='webui?command=ptzinit'" id="home">Init_PTZ</button>
 <br />
