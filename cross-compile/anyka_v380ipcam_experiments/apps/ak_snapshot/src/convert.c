@@ -7,12 +7,12 @@
 
 #include "convert.h"
 
-
-/*************************************
-*NV21:Y VUVU
-*YV12:Y V U
-**************************************/
-int NV21ToYV12(void *save_YV12,void *NV21,int width,int height,int h_flip, int v_flip)
+/*
+// *************************************
+// *NV21:Y VUVU
+// *YV12:Y V U
+// *************************************
+int NV21ToYV12(void *save_YV12,void *NV21,int width,int height)
 {
     unsigned char *src_uv = (unsigned char *)NV21 + width * height;
     unsigned char *dst_v = (unsigned char *)save_YV12 + width * height;
@@ -43,11 +43,11 @@ int NV21ToYV12(void *save_YV12,void *NV21,int width,int height,int h_flip, int v
 
 }
 
-/*************************************
-*NV21:Y VUVU
-*YU12:Y U V
-**************************************/
-int NV21ToYU12(void *save_YU12,void *NV21,int width,int height,int h_flip, int v_flip)
+// *************************************
+// *NV21:Y VUVU
+// *YU12:Y U V
+// *************************************
+int NV21ToYU12(void *save_YU12,void *NV21,int width,int height)
 {
     unsigned char *src_uv = (unsigned char *)NV21 + width * height;
     unsigned char *dst_u = (unsigned char *)save_YU12 + width * height;
@@ -79,11 +79,11 @@ int NV21ToYU12(void *save_YU12,void *NV21,int width,int height,int h_flip, int v
 }
 
 
-/*************************************
-*NV21:Y VUVU
-*YUYV:Y U Y V
-**************************************/
-int YUYVToNV21(void *save_NV21, void *YUYV, int width, int height,int h_flip, int v_flip)
+// *************************************
+// *NV21:Y VUVU
+// *YUYV:Y U Y V
+// *************************************
+int YUYVToNV21(void *save_NV21, void *YUYV, int width, int height)
 {
     unsigned char *src_yuyv = (unsigned char*)YUYV;
     unsigned char *dst_nv21 = (unsigned char*)save_NV21;
@@ -99,7 +99,7 @@ int YUYVToNV21(void *save_NV21, void *YUYV, int width, int height,int h_flip, in
         return -1;
     }
 
-    /* copy Y */
+    // copy Y
     for(int i=0; i<width*height; i++)
         dst_nv21[i] = src_yuyv[2*i];
 
@@ -127,7 +127,7 @@ int YUYVToNV21(void *save_NV21, void *YUYV, int width, int height,int h_flip, in
     return 0;
 }
 
-int saveYUV_NV21(char *path, void *NV21, int width, int height,int h_flip, int v_flip)
+int saveYUV_NV21(char *path, void *NV21, int width, int height)
 {
     FILE *fp_y = NULL;
     FILE *fp_u = NULL;
@@ -147,7 +147,7 @@ int saveYUV_NV21(char *path, void *NV21, int width, int height,int h_flip, int v
     sprintf(path_u,"%s/%s", path, "source_u.yuv");
     sprintf(path_v,"%s/%s", path, "source_v.yuv");
 
-    /* Y */
+    // Y
     fp_y = fopen(path_y,"wb+");
     if(fp_y == NULL)
     {
@@ -158,7 +158,7 @@ int saveYUV_NV21(char *path, void *NV21, int width, int height,int h_flip, int v
     fwrite(NV21,width*height,1,fp_y);
     fclose(fp_y);
 
-    /* U V */
+    // U V
     fp_u = fopen(path_u,"wb+");
     fp_v = fopen(path_v,"wb+");
     if(fp_u==NULL || fp_v==NULL)
@@ -172,7 +172,7 @@ int saveYUV_NV21(char *path, void *NV21, int width, int height,int h_flip, int v
         return -1;
     }
 
-    /* U */
+    // U
     for(int i = 1; i < width*height/2; i += 2)
     {
         fwrite(src_uv+i, 1, 1, fp_u);
@@ -190,7 +190,7 @@ int saveYUV_NV21(char *path, void *NV21, int width, int height,int h_flip, int v
     return 0;
 }
 
-int saveY_UV_NV21(char *path, void *NV21, int width, int height,int h_flip, int v_flip)
+int saveY_UV_NV21(char *path, void *NV21, int width, int height)
 {
     FILE *fp_y = NULL;
     FILE *fp_uv = NULL;
@@ -207,7 +207,7 @@ int saveY_UV_NV21(char *path, void *NV21, int width, int height,int h_flip, int 
     sprintf(path_y,"%s/%s", path, "source_y.bin");
     sprintf(path_uv,"%s/%s", path, "source_uv.bin");
 
-    /* Y */
+    // Y
     fp_y = fopen(path_y,"wb+");
     if(fp_y == NULL)
     {
@@ -218,7 +218,7 @@ int saveY_UV_NV21(char *path, void *NV21, int width, int height,int h_flip, int 
     fwrite(NV21,width*height,1,fp_y);
     fclose(fp_y);
 
-    /* UV */
+    // UV
     fp_uv = fopen(path_uv,"wb+");
     if(fp_uv == NULL)
     {
@@ -232,10 +232,10 @@ int saveY_UV_NV21(char *path, void *NV21, int width, int height,int h_flip, int 
     return 0;
 }
 
-/*************************************************************************
- *RGB low byte is B
- ************************************************************************/
-int RGB24ToRGB555(void *RGB555,void *RGB24,int width,int height,int h_flip, int v_flip)
+// *************************************************************************
+// *RGB low byte is B
+// *************************************************************************
+int RGB24ToRGB555(void *RGB555,void *RGB24,int width,int height)
 {
     unsigned short *dst_555 = (unsigned short *)RGB555;
     unsigned char * src_24 = (unsigned char *)RGB24;
@@ -255,10 +255,10 @@ int RGB24ToRGB555(void *RGB555,void *RGB24,int width,int height,int h_flip, int 
     return 0;
 }
 
-/*************************************************************************
- *RGB low byte is B
- ************************************************************************/
-int RGB24ToRGB565(void *RGB565,void *RGB24,int width,int height,int h_flip, int v_flip)
+// *************************************************************************
+// *RGB low byte is B
+// *************************************************************************
+int RGB24ToRGB565(void *RGB565,void *RGB24,int width,int height)
 {
     unsigned short *dst_565 = (unsigned short *)RGB565;
     unsigned char * src_24 = (unsigned char *)RGB24;
@@ -278,11 +278,11 @@ int RGB24ToRGB565(void *RGB565,void *RGB24,int width,int height,int h_flip, int 
     return 0;
 }
 
-/******************************************************
- *YUV422：Y：U：V=2:1:1
- *RGB24 ：B G R
-******************************************************/
-int YUV422PToRGB24(void *RGB24,void *YUV422P,int width,int height,int h_flip, int v_flip)
+// ******************************************************
+// *YUV422：Y：U：V=2:1:1
+// *RGB24 ：B G R
+// ******************************************************
+int YUV422PToRGB24(void *RGB24,void *YUV422P,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)YUV422P;
     unsigned char *src_u = (unsigned char *)YUV422P + width * height;
@@ -319,55 +319,10 @@ int YUV422PToRGB24(void *RGB24,void *YUV422P,int width,int height,int h_flip, in
     return 0;
 }
 
-/******************************************************
-*YUV420:Y U V
-******************************************************/
-int YUV420ToRGB24(void *RGB24,void *YUV420,int width,int height,int h_flip,int v_flip)
-{
-    unsigned char *src_y = (unsigned char *)YUV420;
-    unsigned char *src_u = (unsigned char *)YUV420 + width * height;
-    unsigned char *src_v = (unsigned char *)YUV420 + width * height * 5 / 4;
-
-    unsigned char *dst_RGB = (unsigned char *)RGB24;
-
-    int temp[3];
-
-    if(RGB24 == NULL || YUV420 == NULL || width <= 0 || height <= 0)
-    {
-        printf(" YUV420ToRGB24 incorrect input parameter!\n");
-        return -1;
-    }
-
-    for(int y = 0;y < height;y ++)
-    {
-        for(int x = 0;x < width;x ++)
-        {
-            int Y = y*width + x;
-            int x_inv = x-h_flip*x+h_flip*(width-x-1);
-            int y_inv = y-v_flip*y+v_flip*(height-y-1);
-            //if(h_flip == 1) 
-            //    x_inv = (width-x-1);
-            //}
-            //if(v_flip == 1) {
-            //    y_inv = (height-y-1);
-            //}
-            int Y_inv = y_inv*width + x_inv;
-            int U = (y_inv >> 1)*(width >> 1) + (x_inv >> 1);
-            int V = U;
-
-            temp[0] = src_y[Y_inv] + ((7289 * src_u[U])>>12) - 228;  //b
-            temp[1] = src_y[Y_inv] - ((1415 * src_u[U])>>12) - ((2936 * src_v[V])>>12) + 136;  //g
-            temp[2] = src_y[Y_inv] + ((5765 * src_v[V])>>12) - 180;  //r
-
-            dst_RGB[3*Y] = (temp[0]<0? 0: temp[0]>255? 255: temp[0]);
-            dst_RGB[3*Y+1] = (temp[1]<0? 0: temp[1]>255? 255: temp[1]);
-            dst_RGB[3*Y+2] = (temp[2]<0? 0: temp[2]>255? 255: temp[2]);
-        }
-    }
-
-    return 0;
-}
-int YUV420ToRGB24_orig(void *RGB24,void *YUV420,int width,int height,int h_flip, int v_flip)
+// ******************************************************
+// *YUV420:Y U V
+// ******************************************************
+int YUV420ToRGB24(void *RGB24,void *YUV420,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)YUV420;
     unsigned char *src_u = (unsigned char *)YUV420 + width * height;
@@ -403,11 +358,53 @@ int YUV420ToRGB24_orig(void *RGB24,void *YUV420,int width,int height,int h_flip,
 
     return 0;
 }
+*/
+// ******************************************************
+// *YUV420:Y U V
+// ******************************************************
+int YUV420ToRGB565(void *RGB565,void *YUV420,int width,int height)
+{
+    unsigned char *src_y = (unsigned char *)YUV420;
+    unsigned char *src_u = (unsigned char *)YUV420 + width * height;
+    unsigned char *src_v = (unsigned char *)YUV420 + width * height * 5 / 4;
 
-/******************************************************
-*YVU420:Y V U
-******************************************************/
-int YVU420ToRGB24(void *RGB24,void *YVU420,int width,int height,int h_flip, int v_flip)
+    //unsigned char *dst_RGB = (unsigned char *)RGB24;
+    unsigned short *dst_565 = (unsigned short *)RGB565;
+
+    int temp[3];
+
+    if(RGB565 == NULL || YUV420 == NULL || width <= 0 || height <= 0)
+    {
+        printf(" YUV420ToRGB565 incorrect input parameter!\n");
+        return -1;
+    }
+
+    for(int y = 0;y < height;y ++)
+    {
+        for(int x = 0;x < width;x ++)
+        {
+            int Y = y*width + x;
+            int U = (y >> 1)*(width >> 1) + (x >> 1);
+            int V = U;
+
+            temp[0] = src_y[Y] + ((7289 * src_u[U])>>12) - 228;  //b
+            temp[1] = src_y[Y] - ((1415 * src_u[U])>>12) - ((2936 * src_v[V])>>12) + 136;  //g
+            temp[2] = src_y[Y] + ((5765 * src_v[V])>>12) - 180;  //r
+
+            //dst_RGB[3*Y] = (temp[0]<0? 0: temp[0]>255? 255: temp[0]);
+            //dst_RGB[3*Y+1] = (temp[1]<0? 0: temp[1]>255? 255: temp[1]);
+            //dst_RGB[3*Y+2] = (temp[2]<0? 0: temp[2]>255? 255: temp[2]);
+            dst_565[Y] = ( (((temp[2]<0? 0: temp[2]>255? 255: temp[2])>>3)<<11) | (((temp[1]<0? 0: temp[1]>255? 255: temp[1])>>2)<<5) | ((temp[0]<0? 0: temp[0]>255? 255: temp[0])>>3) );
+        }
+    }
+
+    return 0;
+}
+/*
+// ******************************************************
+// *YVU420:Y V U
+// ******************************************************
+int YVU420ToRGB24(void *RGB24,void *YVU420,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)YVU420;
     unsigned char *src_u = (unsigned char *)YVU420 + width * height* 5 / 4;
@@ -445,7 +442,7 @@ int YVU420ToRGB24(void *RGB24,void *YVU420,int width,int height,int h_flip, int 
 
 }
 
-int YUYVToRGB24(void *RGB24,void *YUYV,int width,int height,int h_flip, int v_flip)
+int YUYVToRGB24(void *RGB24,void *YUYV,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)YUYV;
     unsigned char *src_u = (unsigned char *)YUYV + 1;
@@ -480,7 +477,7 @@ int YUYVToRGB24(void *RGB24,void *YUYV,int width,int height,int h_flip, int v_fl
 
 }
 
-int YVYUToRGB24(void *RGB24,void *YVYU,int width,int height,int h_flip, int v_flip)
+int YVYUToRGB24(void *RGB24,void *YVYU,int width,int height)
 {
     const unsigned char *src_y = (unsigned char *)YVYU;
     const unsigned char *src_u = (unsigned char *)YVYU + 3;
@@ -514,7 +511,7 @@ int YVYUToRGB24(void *RGB24,void *YVYU,int width,int height,int h_flip, int v_fl
     return 0;
 }
 
-int UYVYToRGB24(void *RGB24,void *UYVY,int width,int height,int h_flip, int v_flip)
+int UYVYToRGB24(void *RGB24,void *UYVY,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)UYVY + 1;
     unsigned char *src_u = (unsigned char *)UYVY;
@@ -548,7 +545,7 @@ int UYVYToRGB24(void *RGB24,void *UYVY,int width,int height,int h_flip, int v_fl
     return 0;
 }
 
-int VYUYToRGB24(void *RGB24,void *VYUY,int width,int height,int h_flip, int v_flip)
+int VYUYToRGB24(void *RGB24,void *VYUY,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)VYUY + 1;
     unsigned char *src_u = (unsigned char *)VYUY + 2;
@@ -582,7 +579,7 @@ int VYUYToRGB24(void *RGB24,void *VYUY,int width,int height,int h_flip, int v_fl
     return 0;
 }
 
-int NV12ToRGB24(void *RGB24,void *NV12,int width,int height,int h_flip, int v_flip)
+int NV12ToRGB24(void *RGB24,void *NV12,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)NV12;
     unsigned char *src_v = (unsigned char *)NV12 + width * height + 1;
@@ -620,7 +617,7 @@ int NV12ToRGB24(void *RGB24,void *NV12,int width,int height,int h_flip, int v_fl
 
 }
 
-int NV21ToRGB24(void *RGB24,void *NV21,int width,int height,int h_flip, int v_flip)
+int NV21ToRGB24(void *RGB24,void *NV21,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)NV21;
     unsigned char *src_v = (unsigned char *)NV21 + width * height;
@@ -658,10 +655,10 @@ int NV21ToRGB24(void *RGB24,void *NV21,int width,int height,int h_flip, int v_fl
 
 }
 
-/******************************************************************
-*YV12:Y U V
-*******************************************************************/
-int YV12ToRGB24(void *RGB24,void *YV12,int width,int height,int h_flip, int v_flip)
+// ******************************************************************
+// *YV12:Y U V
+// ******************************************************************
+int YV12ToRGB24(void *RGB24,void *YV12,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)YV12;
     unsigned char *src_v = (unsigned char *)YV12 + width * height;
@@ -700,10 +697,10 @@ int YV12ToRGB24(void *RGB24,void *YV12,int width,int height,int h_flip, int v_fl
 
 }
 
-/******************************************************
- *NV16 belongs to YUV422SP，Y UV UV ,Y：U=2:1
-******************************************************/
-int NV16ToRGB24(void *RGB24,void *NV16,int width,int height,int h_flip, int v_flip)
+// ******************************************************
+// *NV16 belongs to YUV422SP，Y UV UV ,Y：U=2:1
+// ******************************************************
+int NV16ToRGB24(void *RGB24,void *NV16,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)NV16;
     unsigned char *src_u = (unsigned char *)NV16 + width * height;
@@ -724,7 +721,7 @@ int NV16ToRGB24(void *RGB24,void *NV16,int width,int height,int h_flip, int v_fl
         for(int x = 0;x < width;x ++)
         {
             int Y = y*width + x;
-            int U = (Y >> 1) * 2; /* Divided by 2 and then multiplied by 2 is necessary */
+            int U = (Y >> 1) * 2; // Divided by 2 and then multiplied by 2 is necessary
             int V = U;
 
             temp[0] = src_y[Y] + ((7289 * src_u[U])>>12) - 228;  //b
@@ -741,10 +738,10 @@ int NV16ToRGB24(void *RGB24,void *NV16,int width,int height,int h_flip, int v_fl
 
 }
 
-/******************************************************
- *NV61 belongs to YUV422SP，Y VU VU ,Y：U=2:1
-******************************************************/
-int NV61ToRGB24(void *RGB24,void *NV61,int width,int height,int h_flip, int v_flip)
+// ******************************************************
+// *NV61 belongs to YUV422SP，Y VU VU ,Y：U=2:1
+// ******************************************************
+int NV61ToRGB24(void *RGB24,void *NV61,int width,int height)
 {
     unsigned char *src_y = (unsigned char *)NV61;
     unsigned char *src_u = (unsigned char *)NV61 + width * height + 1;
@@ -765,7 +762,7 @@ int NV61ToRGB24(void *RGB24,void *NV61,int width,int height,int h_flip, int v_fl
         for(int x = 0;x < width;x ++)
         {
             int Y = y*width + x;
-            int U = (Y >> 1) * 2; /* Divided by 2 and then multiplied by 2 is necessary */
+            int U = (Y >> 1) * 2; // Divided by 2 and then multiplied by 2 is necessary
             int V = U;
 
             temp[0] = src_y[Y] + ((7289 * src_u[U])>>12) - 228;  //b
@@ -782,7 +779,7 @@ int NV61ToRGB24(void *RGB24,void *NV61,int width,int height,int h_flip, int v_fl
 
 }
 
-int YUVToRGBfile(const char *rgb_path,char *yuv_data,ConverFunc func,int width,int height,int h_flip, int v_flip)
+int YUVToRGBfile(const char *rgb_path,char *yuv_data,ConverFunc func,int width,int height)
 {
     unsigned short *rgb_555 = NULL;
     unsigned char *rgb_24 = NULL;
@@ -807,13 +804,13 @@ int YUVToRGBfile(const char *rgb_path,char *yuv_data,ConverFunc func,int width,i
        return -1;
     }
 
-    /********* rgb24 *********/
+    // ********* rgb24 *********
     memset(path, 0, sizeof(path));
     sprintf(path, "%s/rgb888.rgb", rgb_path);
 
-    func(rgb_24,yuv_data,width,height,h_flip,v_flip);
+    func(rgb_24,yuv_data,width,height);
 
-    /* Create bmp file */
+    // Create bmp file
     fp = fopen(path,"wb+");
     if(!fp)
     {
@@ -829,13 +826,13 @@ int YUVToRGBfile(const char *rgb_path,char *yuv_data,ConverFunc func,int width,i
 
     fclose(fp);
 
-    /********* rgb555 *********/
+    // ********* rgb555 *********
     memset(path, 0, sizeof(path));
     sprintf(path, "%s/rgb555.rgb", rgb_path);
 
-    RGB24ToRGB555(rgb_555,rgb_24,width,height,h_flip,v_flip);
+    RGB24ToRGB555(rgb_555,rgb_24,width,height);
 
-    /* Create bmp file */
+    // Create bmp file
     fp = fopen(path,"wb+");
     if(!fp)
     {
@@ -849,14 +846,14 @@ int YUVToRGBfile(const char *rgb_path,char *yuv_data,ConverFunc func,int width,i
 
     fclose(fp);
 
-    /********* rgb565 *********/
+    // ********* rgb565 *********
     memset(path, 0, sizeof(path));
     sprintf(path, "%s/rgb565.rgb", rgb_path);
 
     memset(rgb_555,0,width*height*2);
-    RGB24ToRGB565(rgb_555,rgb_24,width,height,h_flip,v_flip);
+    RGB24ToRGB565(rgb_555,rgb_24,width,height);
 
-    /* Create bmp file */
+    // Create bmp file
     fp = fopen(path,"wb+");
     if(!fp)
     {
@@ -870,14 +867,14 @@ int YUVToRGBfile(const char *rgb_path,char *yuv_data,ConverFunc func,int width,i
 
     fclose(fp);
 
-    /* free */
+    // free
     free(rgb_555);
     free(rgb_24);
 
     return 0;
 }
 
-int YUVToBMP555(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int height,int h_flip, int v_flip)
+int YUVToBMP555(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int height)
 
 {
     unsigned short *rgb_555 = NULL;
@@ -893,7 +890,7 @@ int YUVToBMP555(const char *bmp_path,char *yuv_data,ConverFunc func,int width,in
         return -1;
     }
 
-   /* Fill header information */
+   // Fill header information
    BmpFileHeader.bfType = 0x4d42;
    BmpFileHeader.bfSize = width*height*2 + sizeof(BmpFileHeader) + sizeof(BmpInfoHeader);
    BmpFileHeader.bfReserved1 = 0;
@@ -924,10 +921,10 @@ int YUVToBMP555(const char *bmp_path,char *yuv_data,ConverFunc func,int width,in
        return -1;
     }
 
-    func(rgb_24,yuv_data,width,height,h_flip,v_flip);
-    RGB24ToRGB555(rgb_555,rgb_24,width,height,h_flip,v_flip);
+    func(rgb_24,yuv_data,width,height);
+    RGB24ToRGB555(rgb_555,rgb_24,width,height);
 
-    /* Create bmp file */
+    // Create bmp file
     fp = fopen(bmp_path,"wb+");
     if(!fp)
     {
@@ -951,7 +948,7 @@ int YUVToBMP555(const char *bmp_path,char *yuv_data,ConverFunc func,int width,in
     return 0;
 }
 
-int YUVToBMP565(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int height,int h_flip, int v_flip)
+int YUVToBMP565(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int height)
 
 {
     unsigned short *rgb_565 = NULL;
@@ -968,7 +965,7 @@ int YUVToBMP565(const char *bmp_path,char *yuv_data,ConverFunc func,int width,in
         return -1;
     }
 
-   /* Fill header information */
+   // Fill header information
    BmpFileHeader.bfType = 0x4d42;
    BmpFileHeader.bfSize = width*height*2 + sizeof(BmpFileHeader) + sizeof(BmpInfoHeader) + sizeof(rgb);
    BmpFileHeader.bfReserved1 = 0;
@@ -1004,10 +1001,10 @@ int YUVToBMP565(const char *bmp_path,char *yuv_data,ConverFunc func,int width,in
        return -1;
     }
 
-    func(rgb_24,yuv_data,width,height,h_flip,v_flip);
-    RGB24ToRGB565(rgb_565,rgb_24,width,height,h_flip,v_flip);
+    func(rgb_24,yuv_data,width,height);
+    RGB24ToRGB565(rgb_565,rgb_24,width,height);
 
-    /* Create bmp file */
+    // Create bmp file
     fp = fopen(bmp_path,"wb+");
     if(!fp)
     {
@@ -1035,7 +1032,7 @@ int YUVToBMP565(const char *bmp_path,char *yuv_data,ConverFunc func,int width,in
     return 0;
 }
 
-int YUVToBMP(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int height,int h_flip,int v_flip)
+int YUVToBMP(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int height)
 {
     unsigned char *rgb_24 = NULL;
     FILE *fp = NULL;
@@ -1049,7 +1046,7 @@ int YUVToBMP(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int h
         return -1;
     }
 
-   /* Fill header information */
+   // Fill header information
    BmpFileHeader.bfType = 0x4d42;
    BmpFileHeader.bfSize = width*height*3 + sizeof(BmpFileHeader) + sizeof(BmpInfoHeader);
    BmpFileHeader.bfReserved1 = 0;
@@ -1075,9 +1072,9 @@ int YUVToBMP(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int h
        return -1;
     }
 
-    func(rgb_24,yuv_data,width,height,h_flip,v_flip);
+    func(rgb_24,yuv_data,width,height);
 
-    /* Create bmp file */
+    // Create bmp file
     fp = fopen(bmp_path,"wb+");
     if(!fp)
     {
@@ -1095,7 +1092,6 @@ int YUVToBMP(const char *bmp_path,char *yuv_data,ConverFunc func,int width,int h
     free(rgb_24);
 
     fclose(fp);
-    printf("Done saving\n");
 
     return 0;
-}
+}*/

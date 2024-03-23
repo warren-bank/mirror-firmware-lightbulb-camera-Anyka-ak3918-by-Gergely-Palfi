@@ -12,6 +12,7 @@
 #include <pthread.h> //for threading , link with lpthread
 #include "snapshot.h"
 #include "log.h"
+#include "convert.h"
 
 // Source adapted from: https://github.com/ankushagarwal/nweb
 
@@ -31,17 +32,17 @@ struct {
   char *ext;
   char *filetype;
 } extensions [] = {
-  {"gif", "image/gif" },
+  //{"gif", "image/gif" },
   {"bmp", "image/bmp" },
-  {"jpg", "image/jpg" },
-  {"jpeg","image/jpeg"},
-  {"png", "image/png" },
+  //{"jpg", "image/jpg" },
+  //{"jpeg","image/jpeg"},
+  //{"png", "image/png" },
   {"ico", "image/ico" },
-  {"zip", "image/zip" },
-  {"gz",  "image/gz"  },
-  {"tar", "image/tar" },
-  {"htm", "text/html" },
-  {"html","text/html" },
+  //{"zip", "image/zip" },
+  //{"gz",  "image/gz"  },
+  //{"tar", "image/tar" },
+  //{"htm", "text/html" },
+  //{"html","text/html" },
   {0,0} };
 
 struct snapshot_t *snapshot_http = NULL;
@@ -54,11 +55,13 @@ void logger(int type, char *s1, char *s2, int socket_fd)
   case ERROR: (void)printf("ERROR: %s:%s Errno=%d exiting pid=%d",s1, s2, errno,getpid());
     break;
   case FORBIDDEN:
-    (void)write(socket_fd, "HTTP/1.1 403 Forbidden\nContent-Length: 185\nConnection: close\nContent-Type: text/html\n\n<html><head>\n<title>403 Forbidden</title>\n</head><body>\n<h1>Forbidden</h1>\nThe requested URL, file type or operation is not allowed on this simple static file webserver.\n</body></html>\n",271);
+    //(void)write(socket_fd, "HTTP/1.1 403 Forbidden\nContent-Length: 185\nConnection: close\nContent-Type: text/html\n\n<html><head>\n<title>403 Forbidden</title>\n</head><body>\n<h1>Forbidden</h1>\nThe requested URL, file type or operation is not allowed on this simple static file webserver.\n</body></html>\n",272);
+    (void)write(socket_fd, "HTTP/1.1 403 Forbidden",23);
     (void)printf("FORBIDDEN: %s:%s",s1, s2);
     break;
   case NOTFOUND:
-    (void)write(socket_fd, "HTTP/1.1 404 Not Found\nContent-Length: 136\nConnection: close\nContent-Type: text/html\n\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found</h1>\nThe requested URL was not found on this server.\n</body></html>\n",224);
+    //(void)write(socket_fd, "HTTP/1.1 404 Not Found\nContent-Length: 144\nConnection: close\nContent-Type: text/html\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found</h1>\nThe requested URL was not found on this server.\n</body></html>\n",225);
+    (void)write(socket_fd, "HTTP/1.1 404 Not Found",23);
     (void)printf("NOT FOUND: %s:%s",s1, s2);
     break;
   case LOG: (void)printf("INFO: %s:%s:%d\n",s1, s2,socket_fd); break;
@@ -122,47 +125,87 @@ void web(int fd, int hit)
   if(!strcmp(fstr, "image/bmp")){
 
 	//snapshot_http->ready = 0;
-	pthread_cond_init(&snapshot_http->ready, NULL);
-	snapshot_http->capture = 1;
-
-	pthread_mutex_lock(&lock);
-	logw("Wait capture...");
-	pthread_cond_wait(&snapshot_http->ready, &lock);
-	pthread_mutex_unlock(&lock);
-
-
-	// TODO: IMPLEMENT WRITE/READ IN MEMORY !
-	if(( file_fd = open(bmp_data_path,O_RDONLY)) == -1) {  /* open the file for reading */
-		logger(NOTFOUND, "failed to open file",&buffer[5],fd);
-	}
-
-  // Serve other files
-  }else{
-        //snapshot_http->ready = 0;
 	//pthread_cond_init(&snapshot_http->ready, NULL);
-	snapshot_http->capture = 1;
-	 if(( file_fd = open(&buffer[5],O_RDONLY)) == -1) {  /* open the file for reading */
-		 logger(NOTFOUND, "failed to open file",&buffer[5],fd);
-	 }
-  }
+	//snapshot_http->capture = 1;
 
+	//pthread_mutex_lock(&lock);
+	//logw("Wait capture...");
+	//pthread_cond_wait(&snapshot_http->ready, &lock);
+	//pthread_mutex_unlock(&lock);
+
+  BITMAPFILEHEADER BmpFileHeader;
+  BITMAPINFOHEADER BmpInfoHeader;
+  unsigned int rgb[3];
+
+  /* Fill header information */
+  BmpFileHeader.bfType = 0x4d42;
+  BmpFileHeader.bfSize = snapshot_http->res_w*snapshot_http->res_h*2 + sizeof(BmpFileHeader) + sizeof(BmpInfoHeader) + sizeof(rgb);
+  BmpFileHeader.bfReserved1 = 0;
+  BmpFileHeader.bfReserved2 = 0;
+  BmpFileHeader.bfOffBits = sizeof(BmpFileHeader) + sizeof(BmpInfoHeader) + sizeof(rgb);
+
+  BmpInfoHeader.biSize = sizeof(BmpInfoHeader);
+  BmpInfoHeader.biWidth = snapshot_http->res_w;
+  BmpInfoHeader.biHeight = -snapshot_http->res_h;
+  BmpInfoHeader.biPlanes = 0x01;
+  BmpInfoHeader.biBitCount = 16;
+  BmpInfoHeader.biCompression = 3;
+  BmpInfoHeader.biSizeImage = (BmpFileHeader.bfSize + 3) & ~3;
+  //BmpInfoHeader.biXPelsPerMeter = 0;
+  //BmpInfoHeader.biYPelsPerMeter = 0;
+  BmpInfoHeader.biClrUsed = 0;
+  BmpInfoHeader.biClrImportant = 0;
+
+  rgb[0] = 0xf800;
+  rgb[1] = 0x07e0;
+  rgb[2] = 0x001f;
 
   logger(LOG,"SEND",&buffer[5],hit);
 
-
-  len = (long)lseek(file_fd, (off_t)0, SEEK_END); /* lseek to the file end to find the length */
-        (void)lseek(file_fd, (off_t)0, SEEK_SET); /* lseek back to the file start ready for reading */
+  //len = (long)lseek(file_fd, (off_t)0, SEEK_END); /* lseek to the file end to find the length */
+  //      (void)lseek(file_fd, (off_t)0, SEEK_SET); /* lseek back to the file start ready for reading */
+  len = snapshot_http->res_w*snapshot_http->res_h*2 + sizeof(BmpFileHeader) + sizeof(BmpInfoHeader) + sizeof(rgb);
           (void)sprintf(buffer,"HTTP/1.1 200 OK\nServer: nweb/%d.0\nContent-Length: %ld\nConnection: close\nContent-Type: %s\n\n", VERSION, len, fstr); /* Header + a blank line */
 
           logger(LOG,"Header",buffer,hit);
   (void)write(fd,buffer,strlen(buffer));
 
+  //fwrite(&BmpFileHeader,sizeof(BmpFileHeader),1,fp);
+  (void)write(fd,&BmpFileHeader,sizeof(BmpFileHeader));
+  //fwrite(&BmpInfoHeader,sizeof(BmpInfoHeader),1,fp);
+  (void)write(fd,&BmpInfoHeader,sizeof(BmpInfoHeader));
+  //fwrite(rgb,sizeof(rgb),1,fp);
+  (void)write(fd,rgb,sizeof(rgb));
+  //fwrite(rgb_565,width*height*2,1,fp);
+  //(void)printf("Serving from RGB565 buffer: %d\n",!snapshot_http->capture);
+  if (snapshot_http->capture == 0){
+    (void)write(fd,snapshot_http->rgb_565_n1,snapshot_http->res_w*snapshot_http->res_h*2);
+  }else{
+    (void)write(fd,snapshot_http->rgb_565_n0,snapshot_http->res_w*snapshot_http->res_h*2);
+  }
+  //free(snapshot_http->rgb_565);
+  //snapshot_http->rgb_565 = NULL;
+
   /* send file in blocks - last block may be smaller */
-  while (  (ret = read(file_fd, buffer, BUFSIZE)) > 0 ) {
-    (void)write(fd,buffer,ret);
+  //while (  (ret = read(file_fd, buffer, BUFSIZE)) > 0 ) {
+  //  (void)write(fd,buffer,ret);
+  //}
+
+	// TODO: IMPLEMENT WRITE/READ IN MEMORY !
+	//if(( file_fd = open(bmp_data_path,O_RDONLY)) == -1) {  /* open the file for reading */
+	//	logger(NOTFOUND, "failed to open file",&buffer[5],fd);
+	//}
+
+  // Serve other files
+  }else{
+	//snapshot_http->capture = 1;
+	 //if(( file_fd = open(&buffer[5],O_RDONLY)) == -1) {  /* open the file for reading */
+		 logger(NOTFOUND, "failed to open file",&buffer[5],fd);
+	 //}
   }
 
-  sleep(0.1);  /* allow socket to drain before signalling the socket is closed */
+
+  sleep(0.01);  /* allow socket to drain before signalling the socket is closed */
   close(fd);
 }
 

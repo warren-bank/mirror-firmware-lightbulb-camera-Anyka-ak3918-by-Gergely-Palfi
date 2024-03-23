@@ -37,7 +37,6 @@
 #include "http_server.h"
 #include "snapshot.h"
 
-int res_w = 640, res_h = 480;				//default if no resolution specified at launch
 volatile sig_atomic_t stop;					//stop if error occurs
 char *out_dir = SNAPSHOT_DEFAULT_DIR;		//where bmp is written
 
@@ -48,8 +47,12 @@ struct video_resolution res;				//max sensor resolution
 
 struct snapshot_t snapshot_ref = {
 	.count = 0,
-	.ready = NULL,
-	.capture = 0
+	//.ready = NULL,
+	.capture = 0,
+	.res_w = 1280,
+	.res_h = 720,
+	.rgb_565_n0 = NULL,
+	.rgb_565_n1 = NULL
 };
 
 void my_handler(int s){
@@ -61,9 +64,7 @@ void my_handler(int s){
 
 void stop_capture(){
 	logi("stop_capture");
-	/*
-	 * step 7: release resource
-	 */
+	// step 7: release resource
 	ak_vi_capture_off(vi_handle);
 	ak_vi_close(vi_handle);
 	stop_server();
@@ -73,59 +74,52 @@ int capture_init(){
 	logi("image module init");
 
 	int ret = -1;								//return value
+	int w_main = 640;
+	int h_main = 480;
+	int w_sub = 640;
+	int h_sub = 480;
 
 	attr.crop.left = 0;
 	attr.crop.top  = 0;
 	attr.crop.width = 1280;
 	attr.crop.height = 720;
+	if ((snapshot_ref.res_w < 640) || (snapshot_ref.res_h < 480)){
+		w_sub = snapshot_ref.res_w;
+		h_sub = snapshot_ref.res_h;
+	}else{
+		w_main = snapshot_ref.res_w;
+		h_main = snapshot_ref.res_h;
+	}
 
-	printf("VIDEO_CHN_SUB index %d \n", VIDEO_CHN_SUB);
-	printf("VIDEO_CHN_MAIN index %d \n", VIDEO_CHN_MAIN);
+	attr.res[VIDEO_CHN_SUB].width = w_sub;
+	attr.res[VIDEO_CHN_SUB].height = h_sub;
+	attr.res[VIDEO_CHN_SUB].max_width = w_sub; //seems to have no effect
+	attr.res[VIDEO_CHN_SUB].max_height = h_sub; //seems to have no effect
 
-	attr.res[VIDEO_CHN_SUB].width = 640;
-	attr.res[VIDEO_CHN_SUB].height = 480;
-	attr.res[VIDEO_CHN_SUB].max_width = 640;
-	attr.res[VIDEO_CHN_SUB].max_height = 480;
+	attr.res[VIDEO_CHN_MAIN].width = w_main;
+	attr.res[VIDEO_CHN_MAIN].height = h_main;
+	attr.res[VIDEO_CHN_MAIN].max_width = w_sub; //janky but works to set lower resolutions
+	attr.res[VIDEO_CHN_MAIN].max_height = h_sub; //possible values 2x2 to 640x480 (don't ask me why, I did not write this stupid library) it seems to control sub channel rather than main
 
-	attr.res[VIDEO_CHN_MAIN].width = 640;
-	attr.res[VIDEO_CHN_MAIN].height = 480;
-	attr.res[VIDEO_CHN_MAIN].max_width = 640;
-	attr.res[VIDEO_CHN_MAIN].max_height = 480;
+	printf("VIDEO_CHN_SUB index %d Resolution: %d x %d\n", VIDEO_CHN_SUB, w_sub, h_sub);
+	printf("VIDEO_CHN_MAIN index %d Resolution: %d x %d\n", VIDEO_CHN_MAIN, w_main, h_main);
 
-	/*
-		attr.res[1].width = 1280;
-	attr.res[1].height = 720;
-	attr.res[1].max_width = 1280;
-	attr.res[1].max_height = 960;
-
-	attr.res[0].width = 640;
-	attr.res[0].height = 480;
-	attr.res[0].max_width = 640;
-	attr.res[0].max_height = 480;
-*/
-
-	/*
-	 * step 1: match sensor
-	 * the location of isp config can either a file or a directory
-	 */
+	// step 1: match sensor
+	// the location of isp config can either a file or a directory
 	ret = ak_vi_match_sensor(cfg);
 	if (ret) {
 		loge("match sensor failed\n");
 		return -1;
 	}
 
-	/*
-	 * step 2: open video input device
-	 */
+	// step 2: open video input device
 	vi_handle = ak_vi_open(VIDEO_DEV0);
 	if (NULL == vi_handle) {
 		loge("vi device open failed\n");
 		return -1;
 	}
 
-	/*
-	 * step 3: get sensor support max resolution
-	 */
+	// step 3: get sensor support max resolution
 	ret = ak_vi_get_sensor_resolution(vi_handle, &res);
 	logv("ak_vi_get_sensor_resolution\n");
 	if (ret) {
@@ -136,10 +130,8 @@ int capture_init(){
 		attr.crop.height = res.height;
 	}
 
-	/*
-	 * step 4: set vi working parameters
-	 * default parameters: 25fps, day mode, auto frame-control
-	 */
+	// step 4: set vi working parameters
+	// default parameters: 25fps, day mode, auto frame-control
 	ret = ak_vi_set_channel_attr(vi_handle, &attr);
 	logv("ak_vi_set_channel_attr\n");
 	if (ret) {
@@ -148,37 +140,44 @@ int capture_init(){
 		return -1;
 	}
 
-	/*
-	 * step 5: start capture frames
-	 */
+	// step 5: start capture frames
 	ret = ak_vi_capture_on(vi_handle);
 	logv("ak_vi_capture_on\n");
 	if (ret) {
 		ak_vi_close(vi_handle);
 		return -1;
 	}
+	ak_vi_set_flip_mirror(vi_handle, 1, 1); //flip + mirror = rotate 180 degrees
 
 	return 1;
 }
 
 
-void bmp_capture(unsigned char *rawimg, unsigned int len){
+void bmp_capture(unsigned char *rawimg){
 
-//	#if DEBUG_SNAPSHOT
-	if(snapshot_ref.capture == 1){
-		char bmp_data_path[50];
-		sprintf(bmp_data_path, "%s/preview.bmp", out_dir);
-		//sprintf(bmp_data_path, "%s/img-%d.bmp", out_dir, rq_snapshot_count++);  //save multiple
-		logi(" >>>>> Saving snapshot: %s", bmp_data_path);
-		//YUVToBMP(<output_file>, <raw_YUV_img>, <type_of_conversion>, res_w, res_h, <h_flip>, <v_flip>);
-		YUVToBMP(bmp_data_path, rawimg, YUV420ToRGB24, res_w, res_h, 1, 1);
-
-		usleep(250); // wait to write
-		snapshot_ref.count++;
+	//char bmp_data_path[50];
+	//sprintf(bmp_data_path, "%s/preview.bmp", out_dir);
+	//logi(" >>>>> Saving snapshot: %s", bmp_data_path);
+	//YUVToBMP(<output_file>, <raw_YUV_img>, <type_of_conversion>, res_w, res_h);
+	//YUVToBMP565(bmp_data_path, rawimg, YUV420ToRGB24, res_w, res_h);
+	//unsigned char *rgb_24 = NULL;
+	//rgb_24 = (unsigned char *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*3);
+	//YUV420ToRGB24(rgb_24,rawimg,snapshot_ref.res_w,snapshot_ref.res_h);
+	//ak_print_normal("[%d] saving to RGB656 buffer: %d\n", snapshot_ref.count, snapshot_ref.capture);
+	if (snapshot_ref.capture == 0){
+		//RGB24ToRGB565(snapshot_ref.rgb_565_n0,rgb_24,snapshot_ref.res_w,snapshot_ref.res_h);
+                YUV420ToRGB565(snapshot_ref.rgb_565_n0,rawimg,snapshot_ref.res_w,snapshot_ref.res_h);
+		snapshot_ref.capture = 1;
+	}else{
+		//RGB24ToRGB565(snapshot_ref.rgb_565_n1,rgb_24,snapshot_ref.res_w,snapshot_ref.res_h);
+                YUV420ToRGB565(snapshot_ref.rgb_565_n1,rawimg,snapshot_ref.res_w,snapshot_ref.res_h);
 		snapshot_ref.capture = 0;
-		pthread_cond_signal(&snapshot_ref.ready);
 	}
-//	#endif
+	//free(rgb_24);
+	//usleep(250); // wait to write
+	snapshot_ref.count++;
+	//snapshot_ref.capture = 0;
+	//pthread_cond_signal(&snapshot_ref.ready);
 }
 
 void capture_loop(){
@@ -186,28 +185,33 @@ void capture_loop(){
 	struct video_input_frame frame = {{{0}, {0}}};
 
 	logv("capture start");
+	snapshot_ref.rgb_565_n0 = (unsigned short *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*2);
+	snapshot_ref.rgb_565_n1 = (unsigned short *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*2);
 
-	/*
-	 * To get frame by loop
-	 */
+	// To get frame by loop
 	while (!stop) {
 
 		__LOG_TIME_START();
 
 		memset(&frame, 0x00, sizeof(frame));
 
-		/* to get frame */
+		//get frame
 		int ret = ak_vi_get_frame(vi_handle, &frame);
 		if (!ret) {
-
-			//ak_print_normal("[%d] main chn yuv len: %u\n", snapshot_ref.count, frame.vi_frame[VIDEO_CHN_MAIN].len);
-			//ak_print_normal("[%d] sub  chn yuv len: %u\n\n", snapshot_ref.count, frame.vi_frame[VIDEO_CHN_SUB].len);
-
-			unsigned int len = frame.vi_frame[VIDEO_CHN_MAIN].len;
-			unsigned char *buf = frame.vi_frame[VIDEO_CHN_MAIN].data;
-
-			bmp_capture(buf, len);
-
+			//if(snapshot_ref.capture == 1){
+				//print YUV frame sizes (useful for debugging frame attributes)
+				//ak_print_normal("[%d] main chn yuv len: %u\n", snapshot_ref.count, frame.vi_frame[VIDEO_CHN_MAIN].len);
+				//ak_print_normal("[%d] sub  chn yuv len: %u\n\n", snapshot_ref.count, frame.vi_frame[VIDEO_CHN_SUB].len);
+				if ((snapshot_ref.res_w < 640) || (snapshot_ref.res_h < 480)){
+					//unsigned int len = frame.vi_frame[VIDEO_CHN_SUB].len;
+					unsigned char *buf = frame.vi_frame[VIDEO_CHN_SUB].data;
+					bmp_capture(buf);
+				}else{
+					//unsigned int len = frame.vi_frame[VIDEO_CHN_MAIN].len;
+					unsigned char *buf = frame.vi_frame[VIDEO_CHN_MAIN].data;
+					bmp_capture(buf);
+				}
+			//}
 			// release frame data
 			ak_vi_release_frame(vi_handle, &frame);
 
@@ -221,16 +225,17 @@ void capture_loop(){
 		ak_sleep_ms(25); // Free CPU to do other things
 						 // 25ms -> 60~70% CPU
 	}
+	free(snapshot_ref.rgb_565_n0);
+	free(snapshot_ref.rgb_565_n1);
 	stop_capture();
 }
-
+void help_message(char* argv[]){
+        fprintf(stderr, "Usage: %s -w <width> -h <height>\n", argv[0]);
+        fprintf(stderr, "Example: %s -w 1280 -h 720\n", argv[0]);
+        fprintf(stderr, "\nNOTE: If no arguments are given, the default resolution is: %d x %d\n", snapshot_ref.res_w, snapshot_ref.res_h);
+}
 
 int parse_args(int argc, char* argv[]){
-
-//    if(argc == 1) {
-//        loge("Usage: ./camerademo -d /tmp/sd/record -w 640 -h 480");
-//        return -1;
-//    }
 
     for (;;) {
         int opt = getopt(argc, argv, ":d:w:h:s");
@@ -239,22 +244,24 @@ int parse_args(int argc, char* argv[]){
         switch (opt) {
         case '?':
             fprintf(stderr, "%s: Unexpected option: %c\n", argv[0], optopt);
+	    help_message(argv);
             return -1;
         case ':':
             fprintf(stderr, "%s: Missing value for: %c\n", argv[0], optopt);
+	    help_message(argv);
             return -1;
-        case 'd':
+        /*case 'd':
             fprintf(stdout, "Using directory: %s\n", optarg);
             out_dir = optarg;
             break;
         case 's':
             //enable_sound = 1;
-            break;
+            break;*/
         case 'w':
-            res_w = atoi(optarg);
+            snapshot_ref.res_w = atoi(optarg);
             break;
         case 'h':
-            res_h = atoi(optarg);
+            snapshot_ref.res_h = atoi(optarg);
             break;
         }
     }

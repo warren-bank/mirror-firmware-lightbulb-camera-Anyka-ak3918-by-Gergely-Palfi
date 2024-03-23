@@ -1,4 +1,4 @@
-
+export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin
 # Read enviroment
 export TOOLCHAIN_PATH=/opt/arm-anykav200-crosstool/arm-anykav200-crosstool/usr
 
