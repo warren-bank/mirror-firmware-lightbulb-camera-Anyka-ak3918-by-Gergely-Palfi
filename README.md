@@ -12,10 +12,11 @@ My attempt at reverse engineering and making use of a Chinese junk camera
 
 ### Working features
 - RTSP stream (720p on http://IP:554/vs0)
-- 640x480 bmp snapshot on port 3000
-- (work in progress) local video recording
+- BMP snapshot (up to 720p) on port 3000
+- JPEG snapshot (encoder working, work in progress)
+- H264 video recording (encoder working, work in progress)
 - Audio playback
-- Audio recording (only pcm raw recording) (work in progress)
+- Audio recording to mp3
 - PTZ movement
 - IR shutter
 - combined web interface with ptz and IR on port 80
@@ -215,71 +216,48 @@ To have a secure login password instead of the default blank we can modify the s
 4) make sure `passwd` file has `root:x:` so that the password is actually used (if the x is missing then the password is ignored)
 5) TEST login from a different terminal before you log out!
 
-## SSH
-Dropbear can give ssh access if telnet is not your preference.
-
 # APPS and Available Functions
 All the functions listed here can be enabled in gergesettings.txt and will be launched at boot.
 
+### SSH
+[Dropbear](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/dropbear) can give ssh access if telnet is not your preference.
+
 ### Snapshot
-The [anyka_v380ipcam_experiments](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master) repo has a good Snapshot app that provides `bmp (640x480)` snapshots on `http://IP:3000/Snapshot.bmp`. All files including libs are available for the SD card. I also created a daemon script for this app to make sure it is restarted if crashed (when trying to load a new image too soon)
 
-If not using the `gergehack.sh` script it can be still started with `./snapshot_daemon`
-
-<s>NOTE: for the original app by ricardojlrufino the sd card has `/mnt/sdcard/CAM/isp` file which needs to be a copy of your `/etc/jffs2/isp_sensor.conf` for whatever sensor you have. (my cam has H63 so that is the default file)</s>
-UPDATE: my version of `ak_snapshot` stores the isp file next to the executable in `/mnt/anyka_hack/snapshot/isp.conf` (my cam has H63 so that is the default file) copy of your `/etc/jffs2/isp_sensor.conf`
+More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/snapshot) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot).
 
 ![ak_snapshot](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/raw/branch/main/Images/ak_snapshot.png)
 
-NOTE: the libs folder has a very old `V2.0.03 libakuio.so` which my camera uses. V3.1.01 is much more common, so feel free to replace the libs with [other ones](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master/akv300-extract/libplat/lib).
+*work in progress* There will be a new version using the JPEG encoder from `venc-demo`.
 
-[more info about my modified ak_snapshot version](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot)
+### Local Video Recording
+*work in progress*
 
-### Video
-work in progress
+The `venc-demo` shows the H264 encoder working.
+
+### RTSP Video Stream
+Many thanks to [MuhammedKalkan](https://github.com/MuhammedKalkan/Anyka-Camera-Firmware). This is now working with 720p video and automatic IR.
+
+More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/rtsp) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/rtsp).
 
 ### Play Sound
-The camera has `/usr/bin/ak_adec_demo` which allows playing sound files over the built in speaker. There is one small issue, it is waaayyyy too loud and makes the plastic casing resonate horribly, so I recommend lowering the volume of the mp3 file, especially if you use the camera indoors.
-```
-[root@anyka /usr/bin]$ ./ak_adec_demo --help
-usage: ./ak_adec_demo [sample rate] [channel num] [type] [audio file path]
-eg.: ./ak_adec_demo 8000 2 mp3 /mnt/20161123-153020.mp3
-support type: [mp3/amr/aac/g711a/g711u/pcm]
-```
-1) lower the volume of your chosen file `ffmpeg -i Tutturuu.mp3 -af "volume=0.3" Tutturuu_low.mp3` (I went as low as 0.1)
-2) copy the sound file over (and the `ak_adec_demo` if you don't have it) with ftp or just put it on the SD card
-3) play the sound `ak_adec_demo 41100 1 mp3 /etc/jffs2/Tutturuu_low.mp3`
+**Extracted from camera.**
 
-Warning: small audio files and executables should fit in the jffs2, but I recommend using SD storage to be safe.
+More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ak_adec_demo)
 
 ### Record Sound
-work in progress
+**mp3 recording works.**
 
-I was able to compile a [working audio input demo](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/audio_in_raw_demo) from the [chinese repo here](https://github.com/helloworld-spec/qiwen/tree/main/anycloud39ev300). It is very basic, there are no settings and it just records audio at 8k samples/s for 10s to a raw pcm file. The goal is to get the aenc_demo working and have proper encoded mp3 audio instead of raw pcm. At least the mic is usable.
+More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/aenc_demo) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/aenc_demo).
 
-After getting the file from the camera (over FTP or SD) `ffplay -f s16le -ar 8k -ac 1 19700101-023156.pcm` will play the file.
+**Raw PCM audio without encoding**
+
+More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ai_demo) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/ai_demo).
 
 ### Movement with PTZ Daemon
-There is a great [ptz motion daemon](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon) which I was able to compile. My finished executable is provided [here](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ptz/ptz_daemon). UPDATE: my version has extra features such as relative motion (up, down, left, right). Source is also provided.
+**Fully functional motion and IR.**
 
-1) open one telnet and run it `./ptz_daemon` (or use gergehack to auto-start it on boot)
-2) open second telnet and home the camera axes `echo "init" > /tmp/ptz.daemon`
-3) move to whatever position you want `echo "t2p 190 95" > /tmp/ptz.daemon` 190 degree horizontal, 40 vertical (0 is top)
-4) quit the daemon if you want with `echo "q" > /tmp/ptz.daemon`, but it can just always run in the background
-
-More instructions to use are on the [original page](https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon)
-
-New features added:
-- relative motion 10 degrees (up, down, left, right)
-
-The ptz daemon can now combine relative and absolute motion commands
-
-```
-echo "t2p 300 50">/tmp/ptz.daemon
-echo "up">/tmp/ptz.daemon
-echo "left">/tmp/ptz.daemon
-```
-This moves the camera to position (300,50) then up 10 degrees to (300,40) then left to (290,40)
+More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ptz) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/IOT-ANYKA-PTZdaemon).
 
 ### IR filter
 The infra-red filter can be turned on/off in two ways. Using the `ak_drv_ir_demo` as described [here](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/IR_shutter.txt), or using the `ptz_daemon` with command `irinit` then `irsetircut 0` or `irsetircut 1` (use with echo as above). Both of these require that the `cmd_serverd` is running, so make sure to set `run_cmd_server=1` in `gergesettings.txt`. For some reason the IR feature is not even mentioned in the original ptz repo documentation, I found it by reading the source.
@@ -290,83 +268,11 @@ I created a combined web interface using the features from `ptz_daemon`, `ak_sna
 
 ![web_interface](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/raw/branch/main/Images/web_interface.png)
 
-# Somewhat functional
-With the main anyka_ipc app and daemon listening processes removed, as well as the simple snapshot capability and telnet ports added the portscan looks like this:
-```
-$> nmap -p 1-10000 192.168.10.191
-Starting Nmap 7.80 ( https://nmap.org ) at 2023-07-18 13:34 CEST
-Nmap scan report for 192.168.10.191
-Host is up (0.024s latency).
-Not shown: 9997 closed ports
-PORT     STATE SERVICE
-21/tcp   open  ftp
-23/tcp   open  telnet
-3000/tcp open  ppp
-
-Nmap done: 1 IP address (1 host up) scanned in 5.28 seconds
-```
-possible feature ports from this repo:
-- FTP (port 21) password protected
-- dropbear ssh (port 22) password protected
-- telnet (port 23) password protected
-- screenshot (port 3000)
-- web interface (port 80)
-
-The `gergesettings.txt` file determines which of these services/ports are available. Either way the open ports are no longer an issue because the camera is on an isolated VLAN and we can set passwords.
-
 # How to compile for AK3918?
 
-## The Simple Dirty Way
+More info on compiling [here](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile)
 
-This is a summary of how the ptz_daemon was compiled. Install the tools:
-```
-sudo apt install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi binutils-arm-linux-gnueabi
-```
-I decided to compile everything I can as static (there is plenty of space on the SD card, so the larger size is worth the convenience on not having to look for all the libraries in the camera system). This makes distribution easy, just download and run it on the camera. I have to mention that I had to look for `.a` [static libraries](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master/akv300-extract/libplat/lib) that I can compile into it.
-
-I used the following command (with static libs copied to libs/ folder):
-
-`arm-linux-gnueabi-g++ ptz_daemon_cpp.cpp -L./libs -ldl -lplat_drv -lplat_common -lplat_thread -lpthread -D_GLIBCXX_USE_CXX11_ABI=0 -static -o ptz_daemon`
-
-Then it is a matter of copy and run on the camera. (because the executable is static, there are no dependencies to worry about)
-
-(PS: I still need to learn how to properly use libraries and compile with dynamic libs, this is my first time using gcc)
-
-## The Proper Way (anyka cross-compile with libs)
-
-The cross-compiler is 32bit so using an older OS for better support is worth it. (maybe could even use a 32bit system, but this example is with running 32bit on 64bit linux)
-
-These steps are based on translating [chinese instructions](https://github.com/helloworld-spec/qiwen/blob/main/anycloud39ev300/SDK/Quick%20Start%20Guide.txt) of the SDK.
-
-- Ubuntu 16.04 live USB (so I don't destroy my distro)
-- connect to internet for install
-- `dpkg --add-architecture i386`
-- `sudo apt update`
-- `sudo apt install git libc6:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386`
-- `git clone https://github.com/helloworld-spec/qiwen.git`
-- `sudo tar -Pxvf  anyka_uclibc_gcc.tar.bz2` (this will set up the compiler in /opt/)
-
-These steps are included in a convenient bash script that can be launched on the live OS after connecting to internet.
-
-to use the compiler:
-- `export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin`
-- test with `arm-anykav200-linux-uclibcgnueabi-gcc –v`
-
-# Compile example using cross compiler:
-This is an example of how to compile the `ak_snapshot` app from start to finish
-
-- Start a live USB version of Ubuntu 16.04 (other versions may work too, not tested)
-- Connect to the internet
-- copy `setup.sh` and the source code `anyka_v380ipcam_experiments` to the home folder `/home/ubuntu`
-- open terminal in home folder and run `./setup.sh` (when it is done it should print the gcc version of the anyka compiler)
-- copy the last line `export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin`
-- `cd anyka_v380ipcam_experiments/apps/ak_snapshot/`
-- paste `export PATH=$PATH:/opt/arm-anykav200-crosstool/usr/bin`
-- `./build` (the compiled `ak_snapshot` will appear)
-- you can now put the new app on the camera using FTP and run it
-
-[more info about ak_snapshot](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/anyka_v380ipcam_experiments/apps/ak_snapshot)
-
+There is also a dirty way described [here](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/IOT-ANYKA-PTZdaemon), but this barely works and is not recommended.
 
 # Modify file-system
 The camera runs on squashfs, so it will be read-only. However, we can create a new squashfs filesystem with modified files and overwrite the current one with `updater`.
@@ -385,32 +291,6 @@ modify `/etc/init.d/rc.local` to not launch `/usr/sbin/service.sh` and `/usr/sbi
 4) `[root@anyka /mnt]$ updater local A=/mnt/newroot.sqsh4`
 
 more detailed process [here](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot/updater.txt)
-
-# RTSP
-Many thanks to [MuhammedKalkan](https://github.com/MuhammedKalkan/Anyka-Camera-Firmware). This is now working with 720p video and automatic IR.
-
-Using the [Nemobi/Anyka](https://github.com/Nemobi/Anyka/tree/main/device/squashfs-root) repo rtsp demo executable results in a lot of errors. The libs are loaded similarly to the snapshot app, 
-
-`LD_LIBRARY_PATH=/mnt/anyka_hack/lib_rtsp:/mnt/anyka_hack/oldcam/usr/lib` (from SD card folder)
-
-before launching the executable. First of all my camera does not support `/etc/jffs2/` folder path for H63 sensor conf file, I had to modify the 2 bytes of the binary to point to `/etc/jffs2/c`. When that was done, it complained that the conf file was too old version and needed `version 3`, so using an [alternative conf file](https://github.com/Nemobi/Anyka/blob/main/device/squashfs-root/local/isp_h63_mipi_1lane_101402.conf) for the same sensor solved that. Then it could finally launch rtsp, but right away gives error. (full log available in [folder](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/rtsp/manual_launch.log))
-
-```
-[get_v4l2_ptr:408] select timeout!
-
-[isp_vi_capture_on:724] get v4l2 frame ptr failed!
-
-[ak_rtsp_vi_init:150] start capture failed
-```
-
-This is as far as I got.
-
-The point of attention now is `libplat_vi.so` which contains the offending `get_v4l2_ptr`, but it could just as well be caused by a module. `ak_info_dump.ko` or `akcamera.ko`, which seem to be outdated. I could not load newer versions from SD card, `insmod` throws an error:
-
-```
-insmod: can't insert 'akcamera.ko': unknown symbol in module, or unknown parameter
-insmod: can't insert 'ak_info_dump.ko': unknown symbol in module, or unknown parameter
-```
 
 # How to move files to and from the camera (for beginners)
 
