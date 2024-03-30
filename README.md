@@ -50,6 +50,16 @@ Enjoy a fully private camera and enable the apps you want.
 
 # Info Links
 
+These are a the most important links here (this is where 99% of the info and resources come from):
+
+https://github.com/helloworld-spec/qiwen/tree/main/anycloud39ev300 (explanation in chinese, good reference)
+
+https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master (ak_snapshot original)
+
+https://github.com/MuhammedKalkan/Anyka-Camera-Firmware (Muhammed's RTSP app + library, and more discussions)
+
+https://github.com/e27-camera-hack/E27-Camera-Hack/discussions/1 (discussion where most of this was worked on)
+
 ## Cool info:
 
 https://github.com/JayGoldberg/anyka-cams
