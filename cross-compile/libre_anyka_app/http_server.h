@@ -123,8 +123,16 @@ void web(int fd, int hit)
   // SNAPSHOT
   // Example: http://192.168.15.57:3000/any.bmp
   if(!strcmp(fstr, "image/jpeg")){
-
-    snapshot_http->count = 10; //request to start encoding a few images (encoder will only stop when no more requests are made)
+    if (snapshot_http->count == 0){
+      pthread_cond_init(&snapshot_http->ready, NULL);
+      snapshot_http->count = 10; //request to start encoding a few images (encoder will only stop when no more requests are made)
+      pthread_mutex_lock(&lock);
+      logw("Wait for capture...\n");
+      pthread_cond_wait(&snapshot_http->ready, &lock);
+      pthread_mutex_unlock(&lock);
+    }else{
+      snapshot_http->count = 10; //request to start encoding a few images (encoder will only stop when no more requests are made)
+    }
 
     logger(LOG,"SEND",&buffer[5],hit);
 

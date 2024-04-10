@@ -2,17 +2,24 @@
 this repo is based on the [original work of Ricardo](https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master) and [MuhammedKalkan](https://github.com/MuhammedKalkan/Anyka-Camera-Firmware). The code has been modified a lot.
 
 # Improvements and changes from Ricardo's work
-- Loads image from memory and does not write to filesystem (as suggested by Ricardo's TODO comments)
+- Loads image from memory and does not write to filesystem
 - Uses hardware JPEG encoding for smaller filesize and faster process time
-- Continuous encoding of images (encoding stops some time after no more previews are requested)
+- Continuous and on-demand(first frame) encoding of images (encoding stops some time after no more previews are requested)
 - Fixed resolution limitations (allows all resolutions up to 1280x720 as long as the size is a multiple of 4)
 - Merged with RTSP stream app
+- Added motion detection trigger
+- H264 stream recording after motion trigger (mp4 not functional yet)
+- Improved capture loop for minimal workload
 
 # How it works
 
-The `capture_loop` continuously takes YUV input and encodes jpeg images as long as there are requests for snapshots (if no https requests are made only RTSP runs)
+The `capture_loop` continuously takes YUV input and encodes jpeg images as long as there are requests for snapshots (if no https requests are made then skipped)
 
 There are two jpeg stream buffers (rotating between writing and ready to serve). This way an image can be served immediately on request.
+
+Motion detection runs without frame capture, only when enabled (`-m` parameter) and when previous recording is nearly done (to check if recording needs to continue).
+
+H264 encoded stream `.str` file recording while motion is observed (continues until motion stops).
 
 The http server is waiting for requests in a separate thread.
 
@@ -23,7 +30,7 @@ RTSP stream runs on separate thread (framerate does suffer a bit if many JPEGs a
 `run_libre_anyka_app.sh` script included which will load the kernel modules and start the app
 
 The kernel module(s) needs to be adjusted to refer to the one for your sensor.
-You can also edit the resolution arguments the snapshot app starts up with.
+You can also edit the arguments the app starts up with.
 
 *Access in Browser*
 
@@ -33,11 +40,16 @@ http://IP:3000/snapshot.jpeg
 
 rtsp://IP:554/vs0 [MAIN] or rtsp://IP:554/vs1 [SUB]
 
+*play recorded `.str` file*
+
+`ffplay -autoexit 20240410-131647_1_.str`
+
 ## Options
 
 The app does not have `--help`, but it takes arguments
 - `-w <width>` [ default 1280 ]
 - `-h <height>` [ default 720 ]
+- `-m <motion_minimum_record_seconds>` [ default 0 disabled ]
 
 # Compiling
 

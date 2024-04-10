@@ -10,7 +10,7 @@
 
 typedef struct snapshot_t{ //this is the struct of information shared between the http and main encoder thread
   int count; //counts down how many snapshots to take (set by http thread, decreased by encoder)
-  //pthread_cond_t ready; // bool //not used
+  pthread_cond_t ready; // bool //signal for on-demand encoding
   uint8_t capture; // bool (indicates which image buffer bellow is being written to, the other can be served)
   int res_w; //resolution (from launch argument)
   int res_h;

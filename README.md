@@ -13,13 +13,14 @@ My attempt at reverse engineering and making use of a Chinese junk camera
 ### Working features
 - RTSP stream (720p on http://IP:554/vs0)
 - BMP snapshot (up to 720p) on port 3000
-- JPEG snapshot (encoder working, work in progress)
-- H264 video recording (encoder working, work in progress)
+- JPEG snapshot
+- H264 video recording (no mp4 yet)
 - Audio playback
 - Audio recording to mp3
 - PTZ movement
 - IR shutter
 - combined web interface with ptz and IR on port 80
+- Motion detection
 
 The camera can now be connected to a video recorder or monitor software such as MotionEye.
 
@@ -266,6 +267,10 @@ More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_
 
 More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ai_demo) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/ai_demo).
 
+### Motion detection
+
+More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/md_demo) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/md_demo).
+
 ### Movement with PTZ Daemon
 **Fully functional motion and IR.**
 
@@ -284,9 +289,11 @@ I created a combined web interface using the features from `ptz_daemon`, `ak_sna
 
 This is an app in development aimed to combine the features from the above components and make it small enough to run from flash without the SD card.
 
-Currently contains features from:
+Currently contains features:
 - JPEG snapshot
 - RTSP stream
+- Motion detection trigger
+- H264 `.str` file recording to SD card
 - Web interface coming soon...
 
 More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/libre_anyka_app) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/libre_anyka_app).

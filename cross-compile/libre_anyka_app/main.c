@@ -19,6 +19,12 @@
 * Description: Capture camera for Anyka
 * Created on: 17 de fev. de 2022
 */
+
+/**
+* Modified by Gerge
+* Description: RTSP, JPEG snapshot and motion detection
+* V1 created on: 09/04/2024
+*/
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
@@ -52,9 +58,38 @@
 #include "ak_ai.h"
 #include "ak_aenc.h"
 #include "ak_drv_ir.h"
+
+//motion detect
+#include "ak_vpss.h"
+
+#define SAVE_PATH        	"/mnt/video_encode"	//default save path
 #define IRCUT_A_FILE_NAME       "/sys/user-gpio/gpio-ircut_a"
 #define IRLED_FILE_NAME		"/sys/user-gpio/IR_LED"
 #define STRING_LEN	            128
+
+struct video_handle {
+	void *venc_handle;					//video encode handle
+	void *stream_handle;				//video stream handle
+	enum encode_group_type enc_type;	//current encode type
+	ak_pthread_t ak_venc_tid;			//thread id
+};
+
+struct resolution_t {
+	unsigned int width;
+	unsigned int height;
+	unsigned char str[20];
+};
+
+struct md_judge_param {
+	int level_threshold;		//value range: [0, 65536)
+	int blocks_threshold;		//md blocks trigger md
+};
+
+enum md_judge_result {
+	JUDGE_RESULT_ERR = 0,
+	JUDGE_RESULT_MD,
+	JUDGE_RESULT_NO_MD
+};
 
 enum day_ctrl_level {
 	DAY_LEVEL_RESERVED = 0x00,
@@ -94,7 +129,7 @@ struct ak_misc {
 
 static struct ak_misc misc_ctrl = {0};
 
-#define DEFAULT_FPS                 25
+#define DEFAULT_FPS                 20
 #define DEFAULT_MINQP               20
 #define DEFAULT_MAXQP               51
 #define DEFAULT_GOP                 2
@@ -116,9 +151,16 @@ int w_main = 1280;
 int h_main = 720;
 int w_sub = 640;
 int h_sub = 360;
+int md_trigger_count = 0;
+
+struct video_handle ak_venc[ENCODE_GRP_NUM];
+int md_record_frames =0; //countdown of how many more frames to record
+#define md_max_frames 600 //max frames in one file
+int motion_record_sec = 0; //user defined record time after motion trigger
+int md_record_running = 0; //set to 1 when recording
 
 struct snapshot_t snapshot_ref = {
-	.count = 5, //start off by taking some images even if there is no http request just to fill the two buffers
+	.count = 15,  //at the start encode this many JPEGs
 	.capture = 0, //capture first image to buffer 0
 	.res_w = 1280, //default resolution
 	.res_h = 720,
@@ -141,6 +183,245 @@ void stop_capture(){
 	ak_vi_capture_off(vi_handle);
 	ak_vi_close(vi_handle);
 	stop_server();
+}
+
+static void *venc_open_file(int enc_type)
+{
+	char file[128] = {0};
+	char time_str[32] = {0};
+	const char *suffix[2] = {".str", ".jpg"};
+	struct ak_date date;
+
+	/* get time string */
+	ak_get_localdate(&date);
+	ak_date_to_string(&date, time_str);
+
+	/* distinguish stream and jpeg */
+	if (enc_type < ENCODE_PICTURE) {
+		sprintf(file, "%s/%s_%d_%s", SAVE_PATH, time_str, enc_type, suffix[0]);
+		ak_print_normal_ex("[ H264 ] save file: %s\n", file);
+	} else {
+		static int jpg_cnt = 0;
+
+		sprintf(file, "%s/%s_%d_%s", SAVE_PATH, time_str, jpg_cnt, suffix[1]);
+		ak_print_normal_ex("[ JPG ] save file: %s\n", file);
+		jpg_cnt++;
+	}
+
+	/* open for all mode */
+	FILE *fp = NULL;
+	fp = fopen(file, "a");
+	if (!fp) {
+		//ak_print_error_ex("open [%s] failed, %s\n", file, strerror(errno));
+		return NULL;
+	}
+
+	return fp;
+}
+
+static void venc_save_data(FILE *filp, unsigned char *data, int len)
+{
+	int ret = len;
+	if (filp) {
+		/* make sure all data were writ to file */
+		do {
+			ret -= fwrite(data, 1, ret, filp);
+		} while (ret > 0);
+	}
+}
+
+static void *venc_demo_open_encoder(int index)
+{
+	struct encode_param param = {0};
+
+	switch (index) {
+	case 0:
+		param.width = snapshot_ref.res_w;
+		param.height = snapshot_ref.res_h;
+		param.minqp = 20;
+		param.maxqp = 51;
+		param.fps = 25;
+		param.goplen = param.fps * 2;	   //current gop is stationary
+		param.bps = 2000;				   //kbps
+		param.profile = PROFILE_MAIN;	   //main profile
+		param.use_chn = ENCODE_SUB_CHN;   //use main yuv channel data
+		param.enc_grp = ENCODE_RECORD;     //assignment from enum encode_group_type
+		param.br_mode = BR_MODE_CBR;	   //default is cbr
+		param.enc_out_type = H264_ENC_TYPE;//h.264
+		break;
+	case 1:
+		param.width = snapshot_ref.res_w;
+		param.height = snapshot_ref.res_h;
+		param.minqp = 20;
+		param.maxqp = 51;
+		param.fps = 10;
+		param.goplen = param.fps * 2;
+		param.bps = 2000;	//kbps
+		param.profile = PROFILE_MAIN;		//same as above
+		param.use_chn = ENCODE_MAIN_CHN;
+		param.enc_grp = ENCODE_MAINCHN_NET;	//just this scope difference
+		param.br_mode = BR_MODE_CBR;
+		param.enc_out_type = H264_ENC_TYPE;
+		break;
+	case 2:
+		param.width = snapshot_ref.res_w;
+		param.height = snapshot_ref.res_h;
+		param.minqp = 20;
+		param.maxqp = 51;
+		param.fps = 10;
+		param.goplen = param.fps * 2;
+		param.bps = 300;	//kbps
+		param.profile = PROFILE_MAIN;
+		param.use_chn = ENCODE_SUB_CHN;		//use sub yuv channel data
+		param.enc_grp = ENCODE_SUBCHN_NET;	//same as above
+		param.br_mode = BR_MODE_CBR;
+		param.enc_out_type = H264_ENC_TYPE;
+		break;
+	case 3:
+		param.width = snapshot_ref.res_w;
+		param.height = snapshot_ref.res_h;
+		param.minqp = 20;
+		param.maxqp = 51;
+		param.fps = 10;
+		param.goplen = param.fps * 2;
+		param.bps = 500;	//kbps
+		param.profile = PROFILE_MAIN;
+		param.use_chn = ENCODE_SUB_CHN;
+		param.enc_grp = ENCODE_PICTURE;		//jpeg encode
+		param.br_mode = BR_MODE_CBR;
+		param.enc_out_type = MJPEG_ENC_TYPE;	//jpeg encode
+		break;
+	default:
+		return NULL;
+		break;
+	}
+
+	return ak_venc_open(&param);
+}
+
+static void venc_stop_stream(enum encode_group_type grp)
+{
+	struct video_handle *enc = &ak_venc[grp];
+
+	if (!enc->ak_venc_tid)
+		return;
+	/* wait thread exit */
+	ak_thread_join(enc->ak_venc_tid);
+
+	/* release resource */
+	ak_venc_cancel_stream(enc->stream_handle);
+	enc->stream_handle = NULL;
+	ak_venc_close(enc->venc_handle);
+	enc->venc_handle = NULL;
+}
+
+static void *venc_save_stream_thread(void *arg)
+{
+	long int tid = ak_thread_get_tid();
+	ak_print_normal_ex("start a work thread, tid: %ld\n", tid);
+
+	struct video_handle *handle = (struct video_handle *)arg;
+
+	/* first, open file */
+	FILE *fp = venc_open_file(handle->enc_type);
+	//ak_print_error_ex("########### open ###########\n");
+	int frame_num = 0; //ak_vi_get_fps(vi_handle)*motion_record_sec;
+	md_record_running = 1;
+
+	/*
+	 * according number of total save frame, iterate
+	 * specific times
+	 */
+	while ((frame_num <= md_max_frames) && (md_record_frames > 0)) {
+		struct video_stream stream = {0};
+		/* get stream */
+		int ret = ak_venc_get_stream(handle->stream_handle, &stream);
+		if (ret) {
+			ak_sleep_ms(10);
+			continue;
+		}
+		ak_print_normal_ex("[tid: %ld, chn: %d] get stream, size: %d, frame: %d\n",
+				tid, handle->enc_type, stream.len, frame_num);
+
+		venc_save_data(fp, stream.data, stream.len);
+
+		/* release frame */
+		ret = ak_venc_release_stream(handle->stream_handle, &stream);
+		frame_num++;
+		md_record_frames--;
+
+		if ((frame_num % 3) == 0)
+			ak_sleep_ms(10);
+	}
+
+	/* when write done, close file */
+	if (fp)
+		fclose(fp);
+
+	/* stop video encode */
+	venc_stop_stream(handle->enc_type);
+	md_record_running = 0;
+	ak_print_normal_ex("### thread id: %ld exit ###\n", ak_thread_get_tid());
+	ak_thread_exit();
+
+	return NULL;
+}
+
+static int venc_start_stream(enum encode_group_type grp)
+{
+	struct video_handle *handle = &ak_venc[grp];
+
+	printf("stream encode mode, start encode group: %d\n", grp);
+
+	/* init encode handle */
+	handle->venc_handle = venc_demo_open_encoder(grp);
+	if (!handle->venc_handle) {
+		printf("video encode open type: %d failed\n", grp);
+		return -1;
+	}
+
+	/* request stream, video encode module will start capture and encode */
+	handle->stream_handle = ak_venc_request_stream(vi_handle,
+			handle->venc_handle);
+	if (!handle->stream_handle) {
+		printf("request stream failed\n");
+		return -1;
+	}
+	handle->enc_type = grp;
+	/* create thread to get stream and do you primary mission */
+	ak_thread_create(&handle->ak_venc_tid, venc_save_stream_thread,
+			(void *)handle, 100*1024, 90);
+
+	return 0;
+}
+
+//motion detection
+static int md_demo(const void *vi_handle, const struct md_judge_param *judge)
+{
+	struct vpss_md_info md;
+
+	int ret = ak_vpss_md_get_stat(vi_handle, &md);
+	if (ret) {
+		//ak_print_error_ex("ak_md get fail\n");
+		ret = JUDGE_RESULT_ERR;
+	} else {
+		int i, j;
+		int md_cnt = 0;
+		//check motion level against threshold in all 16x32 blocks
+		for(i=0; i<16; i++) {
+			for(j=0; j<32; j++) {
+				if(md.stat[i][j] > judge->level_threshold)
+					md_cnt++;
+			}
+		}
+
+		if (md_cnt > judge->blocks_threshold)
+			ret = JUDGE_RESULT_MD;
+		else
+			ret = JUDGE_RESULT_NO_MD;
+	}
+
+	return ret;
 }
 
 int capture_init(){
@@ -409,74 +690,7 @@ void run_rtsp_stuff(){
 	}
 }
 
-static void *venc_demo_open_encoder(int index)
-{
-	struct encode_param param = {0};
 
-	switch (index) {
-	case 0:
-		param.width = snapshot_ref.res_w;
-		param.height = snapshot_ref.res_h;
-		param.minqp = 20;
-		param.maxqp = 51;
-		param.fps = 25;
-		param.goplen = param.fps * 2;	   //current gop is stationary
-		param.bps = 2000;				   //kbps
-		param.profile = PROFILE_MAIN;	   //main profile
-		param.use_chn = ENCODE_SUB_CHN;   //use main yuv channel data
-		param.enc_grp = ENCODE_RECORD;     //assignment from enum encode_group_type
-		param.br_mode = BR_MODE_CBR;	   //default is cbr
-		param.enc_out_type = H264_ENC_TYPE;//h.264
-		break;
-	case 1:
-		param.width = snapshot_ref.res_w;
-		param.height = snapshot_ref.res_h;
-		param.minqp = 20;
-		param.maxqp = 51;
-		param.fps = 10;
-		param.goplen = param.fps * 2;
-		param.bps = 500;	//kbps
-		param.profile = PROFILE_MAIN;		//same as above
-		param.use_chn = ENCODE_MAIN_CHN;
-		param.enc_grp = ENCODE_MAINCHN_NET;	//just this scope difference
-		param.br_mode = BR_MODE_CBR;
-		param.enc_out_type = H264_ENC_TYPE;
-		break;
-	case 2:
-		param.width = snapshot_ref.res_w;
-		param.height = snapshot_ref.res_h;
-		param.minqp = 20;
-		param.maxqp = 51;
-		param.fps = 10;
-		param.goplen = param.fps * 2;
-		param.bps = 300;	//kbps
-		param.profile = PROFILE_MAIN;
-		param.use_chn = ENCODE_SUB_CHN;		//use sub yuv channel data
-		param.enc_grp = ENCODE_SUBCHN_NET;	//same as above
-		param.br_mode = BR_MODE_CBR;
-		param.enc_out_type = H264_ENC_TYPE;
-		break;
-	case 3:
-		param.width = snapshot_ref.res_w;
-		param.height = snapshot_ref.res_h;
-		param.minqp = 20;
-		param.maxqp = 51;
-		param.fps = 10;
-		param.goplen = param.fps * 2;
-		param.bps = 500;	//kbps
-		param.profile = PROFILE_MAIN;
-		param.use_chn = ENCODE_SUB_CHN;
-		param.enc_grp = ENCODE_PICTURE;		//jpeg encode
-		param.br_mode = BR_MODE_CBR;
-		param.enc_out_type = MJPEG_ENC_TYPE;	//jpeg encode
-		break;
-	default:
-		return NULL;
-		break;
-	}
-
-	return ak_venc_open(&param);
-}
 /*
 void bmp_capture(unsigned char *rawimg){
 
@@ -509,6 +723,11 @@ void capture_loop(){
 
 	struct video_input_frame frame;
 	void *jpeg_encoder = venc_demo_open_encoder(ENCODE_PICTURE);
+	struct md_judge_param judge;
+	int skip_md = 40;
+	int trigger_count =0;
+	judge.level_threshold = 5000;
+	judge.blocks_threshold = 12;
 
 	logv("capture start");
 	//snapshot_ref.rgb_565_n0 = (unsigned short *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*2);
@@ -516,8 +735,31 @@ void capture_loop(){
 
 	// To get frame by loop
 	while (!stop) {
+		if ((motion_record_sec > 0) && (md_record_frames < 50)){
+			if (skip_md == 0){
+				if (JUDGE_RESULT_MD == md_demo(vi_handle, &judge)){
+					ak_print_normal("motion detected!!\n");
+					trigger_count++;
+					if (trigger_count >= 2){ //only record when triggered 2 consecutive times to avoid false trigger
+						md_record_frames=motion_record_sec*20;
+						trigger_count=0;
+					}
+				}else{
+					ak_print_normal("no motion\n");
+					if (trigger_count == 1) trigger_count=0;
+				}
+				skip_md=2;
+			}else{
+				skip_md--;
+			}
+			if ((md_record_frames > 0) && (	md_record_running == 0)){
+				venc_start_stream(ENCODE_MAINCHN_NET);
+			}
+		}
 
-		__LOG_TIME_START();
+
+		if (snapshot_ref.count > 0){
+		//__LOG_TIME_START();
 		//get frame
 		if (!ak_vi_get_frame(vi_handle, &frame)) {
 			//check if image is needed
@@ -533,6 +775,7 @@ void capture_loop(){
 				snapshot_ref.count--;
 				snapshot_ref.capture = !snapshot_ref.capture; //mark current image for reading and reserve the other for writing next image
 				free(snapshot_ref.jpeg[snapshot_ref.capture].data);
+				pthread_cond_signal(&snapshot_ref.ready);
 			}
 			// release frame data
 			ak_vi_release_frame(vi_handle, &frame);
@@ -540,10 +783,10 @@ void capture_loop(){
 			// not ready， sleep to release CPU
 			ak_sleep_ms(10);
 		}
+		//__LOG_TIME_END("capture");
+		}
 
-		__LOG_TIME_END("capture");
-
-		ak_sleep_ms(25); // Free CPU to do other things
+		ak_sleep_ms(100); // Free CPU to do other things
 						 // 25ms -> 60~70% CPU
 	}
 	ak_venc_close(jpeg_encoder);
@@ -556,12 +799,13 @@ void help_message(char* argv[]){
         fprintf(stderr, "Usage: %s -w <width> -h <height>\n", argv[0]);
         fprintf(stderr, "Example: %s -w 1280 -h 720\n", argv[0]);
         fprintf(stderr, "\nNOTE: If no arguments are given, the default resolution is: %d x %d\n", snapshot_ref.res_w, snapshot_ref.res_h);
+        fprintf(stderr, "to enable motion trigger: %s -m <record_seconds>\n", argv[0]);
 }
 
 int parse_args(int argc, char* argv[]){
 
     for (;;) {
-        int opt = getopt(argc, argv, ":d:w:h:s");
+        int opt = getopt(argc, argv, "w:h:m:");
         if (opt == -1)
             break;
         switch (opt) {
@@ -586,6 +830,9 @@ int parse_args(int argc, char* argv[]){
         case 'h':
             snapshot_ref.res_h = atoi(optarg);
             break;
+        case 'm':
+            motion_record_sec = atoi(optarg);
+            break;
         }
     }
 
@@ -597,6 +844,12 @@ int main(int argc, char *argv[]) {
 	if (parse_args(argc, argv) < 0) return -1;
 
 	signal(SIGINT, my_handler);
+	if (access(SAVE_PATH, W_OK) != 0) {
+		if (mkdir(SAVE_PATH, 0755)) {
+			printf("mkdir: %s, %s\n", SAVE_PATH, strerror(errno));
+			return -1;
+		}
+	}
 
 	logi("capture_init...");
 	int status = capture_init();
