@@ -13,7 +13,7 @@ this repo is based on the [original work of Ricardo](https://github.com/ricardoj
 
 # How it works
 
-The `capture_loop` continuously takes YUV input and encodes jpeg images as long as there are requests for snapshots (if no https requests are made then skipped)
+The JPEG encoder runs non-stop and generates a JPEG stream that is loaded into the two image buffers by capture loop.
 
 There are two jpeg stream buffers (rotating between writing and ready to serve). This way an image can be served immediately on request.
 
@@ -23,7 +23,7 @@ H264 encoded stream `.str` file recording while motion is observed (continues un
 
 The http server is waiting for requests in a separate thread.
 
-RTSP stream runs on separate thread (framerate does suffer a bit if many JPEGs are requested)
+RTSP stream runs on separate thread.
 
 ## Usage
 

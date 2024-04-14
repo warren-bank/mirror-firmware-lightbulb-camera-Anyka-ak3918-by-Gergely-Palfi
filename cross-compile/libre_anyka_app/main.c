@@ -151,7 +151,6 @@ int w_main = 1280;
 int h_main = 720;
 int w_sub = 640;
 int h_sub = 360;
-int md_trigger_count = 0;
 
 struct video_handle ak_venc[ENCODE_GRP_NUM];
 int md_record_frames =0; //countdown of how many more frames to record
@@ -160,19 +159,12 @@ int motion_record_sec = 0; //user defined record time after motion trigger
 int md_record_running = 0; //set to 1 when recording
 
 struct snapshot_t snapshot_ref = {
-	.count = 15,  //at the start encode this many JPEGs
+	.count = 0,  //at the start encode this many JPEGs
 	.capture = 0, //capture first image to buffer 0
 	.res_w = 1280, //default resolution
 	.res_h = 720,
 	.jpeg = {{0},{0}} //image buffers
 };
-
-void my_handler(int s){
-   printf("Caught signal %d - Exiting... \n",s);
-   stop=1;
-   ak_sleep_ms(200);
-   exit(1);
-}
 
 void stop_capture(){
 	logi("stop_capture");
@@ -180,9 +172,14 @@ void stop_capture(){
 	ak_rtsp_stop(VIDEO_CHN_SUB);
 	ak_rtsp_exit();
 	// step 7: release resource
-	ak_vi_capture_off(vi_handle);
-	ak_vi_close(vi_handle);
 	stop_server();
+}
+
+void my_handler(int s){
+   printf("Caught signal %d - Exiting... \n",s);
+   stop=1;
+   stop_capture();
+   //exit(1);
 }
 
 static void *venc_open_file(int enc_type)
@@ -721,8 +718,9 @@ void bmp_capture(unsigned char *rawimg){
 
 void capture_loop(){
 
-	struct video_input_frame frame;
+	//struct video_input_frame frame;
 	void *jpeg_encoder = venc_demo_open_encoder(ENCODE_PICTURE);
+	void *jpeg_stream = ak_venc_request_stream(vi_handle, jpeg_encoder);
 	struct md_judge_param judge;
 	int skip_md = 40;
 	int trigger_count =0;
@@ -758,42 +756,47 @@ void capture_loop(){
 		}
 
 
-		if (snapshot_ref.count > 0){
-		//__LOG_TIME_START();
-		//get frame
-		if (!ak_vi_get_frame(vi_handle, &frame)) {
-			//check if image is needed
-			if(snapshot_ref.count > 0){
-				if ((snapshot_ref.res_w < 640) || (snapshot_ref.res_h < 480)){
+		//if (snapshot_ref.count > 0){
+			//__LOG_TIME_START();
+			//get frame
+			//if (!ak_vi_get_frame(vi_handle, &frame)) {
+			if (!ak_venc_get_stream(jpeg_stream, &snapshot_ref.jpeg[snapshot_ref.capture])) {
+				//check if image is needed
+				/*if ((snapshot_ref.res_w < 640) || (snapshot_ref.res_h < 480)){
 					ak_venc_send_frame(jpeg_encoder, frame.vi_frame[VIDEO_CHN_SUB].data,
 					frame.vi_frame[VIDEO_CHN_SUB].len, &snapshot_ref.jpeg[snapshot_ref.capture]);
 				}else{
 					ak_venc_send_frame(jpeg_encoder, frame.vi_frame[VIDEO_CHN_MAIN].data,
 					frame.vi_frame[VIDEO_CHN_MAIN].len, &snapshot_ref.jpeg[snapshot_ref.capture]);
-				}
-				printf("JPEG [%d] picture size: %d\n", snapshot_ref.capture, snapshot_ref.jpeg[snapshot_ref.capture].len);
-				snapshot_ref.count--;
+				}*/
+				//printf("JPEG [%d] picture size: %d\n", snapshot_ref.capture, snapshot_ref.jpeg[snapshot_ref.capture].len);
+				//snapshot_ref.count--;
 				snapshot_ref.capture = !snapshot_ref.capture; //mark current image for reading and reserve the other for writing next image
 				free(snapshot_ref.jpeg[snapshot_ref.capture].data);
-				pthread_cond_signal(&snapshot_ref.ready);
+				//pthread_cond_signal(&snapshot_ref.ready);
+				// release frame data
+				//ak_vi_release_frame(vi_handle, &frame);
+			} else {
+				// not ready， sleep to release CPU
+				ak_sleep_ms(10);
 			}
-			// release frame data
-			ak_vi_release_frame(vi_handle, &frame);
-		} else {
-			// not ready， sleep to release CPU
-			ak_sleep_ms(10);
-		}
-		//__LOG_TIME_END("capture");
-		}
+			//__LOG_TIME_END("capture");
+		//}
 
 		ak_sleep_ms(100); // Free CPU to do other things
 						 // 25ms -> 60~70% CPU
 	}
+	printf("Capture loop exiting.\n");
+	//ak_sleep_ms(2000);
+	ak_venc_cancel_stream(jpeg_stream);
+	jpeg_stream = NULL;
 	ak_venc_close(jpeg_encoder);
 	jpeg_encoder = NULL;
-	free(snapshot_ref.jpeg[0].data);
-	free(snapshot_ref.jpeg[1].data);
-	stop_capture();
+	ak_vi_capture_off(vi_handle);
+	ak_vi_close(vi_handle);
+	//free(snapshot_ref.jpeg[0].data);
+	//free(snapshot_ref.jpeg[1].data);
+	//stop_capture();
 }
 void help_message(char* argv[]){
         fprintf(stderr, "Usage: %s -w <width> -h <height>\n", argv[0]);
@@ -859,6 +862,7 @@ int main(int argc, char *argv[]) {
 	if(status){
 		logi("loop...");
 		run_rtsp_stuff(); //start up RTSP before entering loop
+		ak_sleep_ms(5000);
 		capture_loop();
 	}
 
