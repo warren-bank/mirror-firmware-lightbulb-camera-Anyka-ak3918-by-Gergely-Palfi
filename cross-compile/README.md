@@ -31,4 +31,4 @@ This is an example of how to compile the `ak_snapshot` app from start to finish
 
 # Easiest way
 
-The way I do my cross compiling is with a dedicated live USB of Ubuntu 16, which has been modified to include the cross-compiler (using CUBES). This means after startup I can run `./build.sh` as the compiler is part of the OS image. The ISO is very large, but if there is interest I may create a share link. Feel free to contact me (admin@raspiweb.com)
+The way I do my cross compiling is with a dedicated live USB of Ubuntu 16, which has been modified to include the cross-compiler (using CUBES). This means after startup I can run `./build.sh` as the compiler is part of the OS image. The ISO is available in a [share link here](https://share.raspiweb.com/s/QxNDkwM).
