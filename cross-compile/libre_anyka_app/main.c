@@ -156,7 +156,7 @@ struct video_handle ak_venc[ENCODE_GRP_NUM];
 int md_record_frames =0; //countdown of how many more frames to record
 #define md_max_frames 600 //max frames in one file
 int motion_record_sec = 0; //user defined record time after motion trigger
-int md_record_running = 0; //set to 1 when recording
+//int md_record_running = 0; //set to 1 when recording
 
 struct snapshot_t snapshot_ref = {
 	.count = 0,  //at the start encode this many JPEGs
@@ -319,45 +319,53 @@ static void *venc_save_stream_thread(void *arg)
 
 	struct video_handle *handle = (struct video_handle *)arg;
 
-	/* first, open file */
-	FILE *fp = venc_open_file(handle->enc_type);
-	//ak_print_error_ex("########### open ###########\n");
-	int frame_num = 0; //ak_vi_get_fps(vi_handle)*motion_record_sec;
-	md_record_running = 1;
-
-	/*
-	 * according number of total save frame, iterate
-	 * specific times
-	 */
-	while ((frame_num <= md_max_frames) && (md_record_frames > 0)) {
-		struct video_stream stream = {0};
-		/* get stream */
-		int ret = ak_venc_get_stream(handle->stream_handle, &stream);
-		if (ret) {
+	while (!stop) {
+		while ((md_record_frames == 0)&&(!stop)){
+			//don't use h264 flames
 			ak_sleep_ms(10);
-			continue;
+			//h264 encoder buffer will be full and only the last 2s will be kept
 		}
-		ak_print_normal_ex("[tid: %ld, chn: %d] get stream, size: %d, frame: %d\n",
-				tid, handle->enc_type, stream.len, frame_num);
+		/* first, open file */
+		if ((md_record_frames > 0)&&(!stop)){
+			FILE *fp = venc_open_file(handle->enc_type);
+			//ak_print_error_ex("########### open ###########\n");
+			int frame_num = 0; //ak_vi_get_fps(vi_handle)*motion_record_sec;
+			//md_record_running = 1;
 
-		venc_save_data(fp, stream.data, stream.len);
+			/*
+			* according number of total save frame, iterate
+			* specific times
+			*/
+			while ((frame_num <= md_max_frames) && (md_record_frames > 0)&&(!stop)) {
+				struct video_stream stream = {0};
+				/* get stream */
+				int ret = ak_venc_get_stream(handle->stream_handle, &stream);
+				if (ret) {
+					ak_sleep_ms(10);
+					continue;
+				}
+				ak_print_normal_ex("[tid: %ld, chn: %d] get stream, size: %d, frame: %d\n",
+						tid, handle->enc_type, stream.len, frame_num);
 
-		/* release frame */
-		ret = ak_venc_release_stream(handle->stream_handle, &stream);
-		frame_num++;
-		md_record_frames--;
+				venc_save_data(fp, stream.data, stream.len);
 
-		if ((frame_num % 3) == 0)
-			ak_sleep_ms(10);
+				/* release frame */
+				ret = ak_venc_release_stream(handle->stream_handle, &stream);
+				frame_num++;
+				md_record_frames--;
+
+				//if ((frame_num % 3) == 0)
+				//	ak_sleep_ms(10);
+			}
+
+			/* when write done, close file */
+			if (fp)
+				fclose(fp);
+			//md_record_running = 0;
+		}
 	}
-
-	/* when write done, close file */
-	if (fp)
-		fclose(fp);
-
 	/* stop video encode */
 	venc_stop_stream(handle->enc_type);
-	md_record_running = 0;
 	ak_print_normal_ex("### thread id: %ld exit ###\n", ak_thread_get_tid());
 	ak_thread_exit();
 
@@ -730,6 +738,8 @@ void capture_loop(){
 	logv("capture start");
 	//snapshot_ref.rgb_565_n0 = (unsigned short *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*2);
 	//snapshot_ref.rgb_565_n1 = (unsigned short *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*2);
+	if (motion_record_sec > 0)
+		venc_start_stream(ENCODE_MAINCHN_NET); //only encode if motion record flag is set
 
 	// To get frame by loop
 	while (!stop) {
@@ -750,9 +760,9 @@ void capture_loop(){
 			}else{
 				skip_md--;
 			}
-			if ((md_record_frames > 0) && (	md_record_running == 0)){
-				venc_start_stream(ENCODE_MAINCHN_NET);
-			}
+			//if ((md_record_frames > 0) && (	md_record_running == 0)){
+			//	venc_start_stream(ENCODE_MAINCHN_NET);
+			//}
 		}
 
 

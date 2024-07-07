@@ -9,7 +9,14 @@ this repo is based on the [original work of Ricardo](https://github.com/ricardoj
 - Merged with RTSP stream app
 - Added motion detection trigger
 - H264 stream recording after motion trigger (mp4 not functional yet)
+- using the h264 encoder buffer allows recording 2s video before the motion happened
 - Improved capture loop for minimal workload
+
+# Things to improve (todo list)
+
+- mp4 file format
+- detect available storage space
+- modify system to fit on 8M flash including libre_anyka_app
 
 # How it works
 
@@ -50,6 +57,8 @@ The app does not have `--help`, but it takes arguments
 - `-w <width>` [ default 1280 ]
 - `-h <height>` [ default 720 ]
 - `-m <motion_minimum_record_seconds>` [ default 0 disabled ]
+
+*NOTE: the width and height applies to the preview image. It is recommended to use smaller than 640x480 so that it uses the sub-stream. RTSP and video recording will always use main resolution*
 
 # Compiling
 
