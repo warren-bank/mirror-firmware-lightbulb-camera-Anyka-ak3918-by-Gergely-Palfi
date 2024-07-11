@@ -110,6 +110,11 @@ in camera `/dev/mtdblock4`
 In the root filesystem replace `/bin/busybox` with the one in `web_interface` on the SD card. This will add `httpd` functionality for the webUI (and some other features).
 The rootfs must fit within 1MiB (compressed size on flash), so because busybox is now larger I moved `/lib/libstdc++.so.6.0.19` and `/lib/libstdc++.so.6.0.19-gdb.py` to `/usr/lib/` and created symlinks to it instead. After compressing into squashfs again, the [`busyroot.sqsh4`](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot) can be installed, but because the `libstdc++` library is still missing some apps will crash.
 
+**TLDR**
+- copy [`busyroot.sqsh4`](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot) to SD card
+- install it with `updater local A=/mnt/busyroot.sqsh4`
+- reboot
+
 ### User FS modification
 in camera `/dev/mtdblock5`
 
@@ -118,14 +123,20 @@ From `/usr/modules` delete `atbm603x_wifi_usb.ko`, `g_file_storage.ko`, `g_mass_
 
 Copy `libre_anyka_app` and `ptz_daemon_dyn` to `/usr/bin`.
 
-Finally the [busyusr.sqsh4] partition is now ready to use. After this cleaning, the size is less than half of the original 4.5MiB meaning there is a lot more space to add things later.
+Finally the [busyusr.sqsh4] partition is now ready to install. After this cleaning, the size is less than half of the original 4.5MiB meaning there is a lot more space to add things later.
+
+**TLDR**
+- make sure your camera is compatible (Realtek 8188 wifi, and gc1034, gc1054, gc1084, h62 or h63 sensor)
+- copy [`busyusr.sqsh4`](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot) to SD card
+- install it with `updater local B=/mnt/busyusr.sqsh4`
+- reboot
 
 ### Setup without SD
 After the root and usr partitions are modified with the desired apps, the following steps are needed to get it working:
 
 copy the webpage www folder to `/etc/jffs2/www` for httpd to serve from flash
 
-The latest `gergehack.sh` is already capable of running fully local files, so update if needed.
+The latest `gergehack.sh` is already capable of running fully local files, so update if needed and check sensor module settings.
 
 This gives the following functions without SD card running on the camera:
 - webUI on port 80
