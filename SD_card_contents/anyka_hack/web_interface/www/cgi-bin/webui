@@ -13,11 +13,13 @@ cat <<EOT
 <html>
 <head>
 <title>Camera - WebUI</title>
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body {
     font-size: 100%;
     font-family: Arial, Verdana, sans-serif;
+    text-align: center;
 }
 </style>
 </head>
@@ -25,23 +27,20 @@ body {
 <div>
 
 <br />
-RTSP stream Main: rtsp://$ipadd:544/vs0 (720p)
+RTSP stream Main: rtsp://$ipadd:544/vs0
 <br />
-RTSP stream Sub: rtsp://$ipadd:544/vs1 (480p)
+RTSP stream Sub: rtsp://$ipadd:544/vs1
+<br />
+Snapshot: http://$ipadd:3000/snapshot.jpeg
+<br />
+<img id="snapshot" src="http://$ipadd:3000/preview.jpeg"/>
 <br />
 <br />
 <button onclick="window.location.href='webui?command=ptzinit'" id="home">Init_PTZ</button>
 <br />
-<button onclick="window.location.href='webui?command=irinit'" id="irinit">Init_IR</button>
-<br />
-<br />
-<button onclick="window.location.href='webui?command=iron'" id="irledson">IR Off [ Day ]</button>
-<br />
-<button onclick="window.location.href='webui?command=iroff'" id="irledsoff">IR On [ Night ]</button>
-<br />
 <br />
 </div>
-<table>
+<table style="margin: 0px auto;">
     <tr align="center">
         <td><button onclick="window.location.href='webui?command=ptzlu'">&#11017;</button></td>
         <td><button onclick="window.location.href='webui?command=ptzu'">&#11014;</button></td>
@@ -59,6 +58,14 @@ RTSP stream Sub: rtsp://$ipadd:544/vs1 (480p)
     </tr>
 </table>
 <br />
+For manual testing:<br />
+<button onclick="window.location.href='webui?command=irinit'" id="irinit">Init_IR</button>
+<br />
+<br />
+<button onclick="window.location.href='webui?command=iron'" id="irledson">IR Off [ Day ]</button>
+<br />
+<button onclick="window.location.href='webui?command=iroff'" id="irledsoff">IR On [ Night ]</button>
+<br /><br />
 Date - $date
 <br />
 IP Address - $ipadd
@@ -67,6 +74,9 @@ Uptime - $uptime
 <br />
 <br />
 
+<script>
+setInterval(function() { document.getElementById("snapshot").src = "http://$ipadd:3000/" + Math.round(Math.random()*100000) + ".jpeg"; }, 300);
+</script>
 
 </body>
 </html>

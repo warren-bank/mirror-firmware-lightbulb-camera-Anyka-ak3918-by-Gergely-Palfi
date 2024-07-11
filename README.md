@@ -38,11 +38,9 @@ The SD hack should launch telnet. Connect with `telnet IP` (user: root, no passw
 
 more detailed process log [here](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot/updater.txt)
 
-After the rootfs is modified, power off the camera and take out the SD card. `Factory` folder can be deleted, the new place for `gergesettings.txt` is in `anyka_hack`. Adjust the settings `rootfs_modified=1`. The settings will be applied using the [update](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/exploit_scripts) of the script from `anyka_hack` folder.
+After the rootfs is modified, power off the camera and take out the SD card. Adjust the settings `rootfs_modified=1`. The settings will be applied using the [update](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack) of the script from `anyka_hack` folder.
 
-Enjoy a fully private camera and enable the apps you want.
-
-**The rest of this repository was written during development and may not be up to date according to the latest user-friendly hack solution.**
+Enjoy a fully private camera.
 
 # Info Links
 
@@ -51,6 +49,8 @@ These are a the most important links here (this is where 99% of the info and res
 https://github.com/helloworld-spec/qiwen/tree/main/anycloud39ev300 (explanation in chinese, good reference)
 
 https://github.com/ricardojlrufino/anyka_v380ipcam_experiments/tree/master (ak_snapshot original)
+
+https://github.com/kuhnchris/IOT-ANYKA-PTZdaemon (ptz daemon original)
 
 https://github.com/MuhammedKalkan/Anyka-Camera-Firmware (Muhammed's RTSP app + library, and more discussions)
 
@@ -97,3 +97,38 @@ More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_
 **mp3 recording works.**
 
 More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/aenc_demo) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/aenc_demo).
+
+# Permanent system hack level 2
+
+The permanent hack listed above simply disables the original anyka_ipc and runs the contents of the SD card instead. What if you wish to run the camera without and SD card?
+
+It is possible to fit the essential applications into the system flash, but the `root` and `usr` partitions need significant modification to free up space.
+
+### Root FS modification
+in camera `/dev/mtdblock4`
+
+In the root filesystem replace `/bin/busybox` with the one in `web_interface` on the SD card. This will add `httpd` functionality for the webUI (and some other features).
+The rootfs must fit within 1MiB (compressed size on flash), so because busybox is now larger I moved `/lib/libstdc++.so.6.0.19` and `/lib/libstdc++.so.6.0.19-gdb.py` to `/usr/lib/` and created symlinks to it instead. After compressing into squashfs again, the [`busyroot.sqsh4`](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot) can be installed, but because the `libstdc++` library is still missing some apps will crash.
+
+### User FS modification
+in camera `/dev/mtdblock5`
+
+Remove the old `anyka_ipc` and `cloudAPI` from `/usr/bin`, delete all libraries in `/usr/lib` (replace with app libs from SD and the `libstdc++` files moved from rootfs).
+From `/usr/modules` delete `atbm603x_wifi_usb.ko`, `g_file_storage.ko`, `g_mass_storage.ko`, `ssv6x5x-sw.bin`, `ssv6x5x.ko`, `udc.ko` and `usbburn.ko`. Optionally the camera sensor modules except the installed sensor can also be deleted (I left them in to keep compatability with other cameras). The `/usr/share/audio_file` can also be removed, `/usr/local/` can be cleared out, finally in `/usr/sbin` keep only the simlinks, `default.script`, `station_connect.sh`, `wifi_driver.sh`, `wifi_manage.sh`, `wifi_run.sh` and `wifi_station.sh`.
+
+Copy `libre_anyka_app` and `ptz_daemon_dyn` to `/usr/bin`.
+
+Finally the [busyusr.sqsh4] partition is now ready to use. After this cleaning, the size is less than half of the original 4.5MiB meaning there is a lot more space to add things later.
+
+### Setup without SD
+After the root and usr partitions are modified with the desired apps, the following steps are needed to get it working:
+
+copy the webpage www folder to `/etc/jffs2/www` for httpd to serve from flash
+
+The latest `gergehack.sh` is already capable of running fully local files, so update if needed.
+
+This gives the following functions without SD card running on the camera:
+- webUI on port 80
+- usual ftp, telnet functions, and ntp time sync
+- RTSP stream and snapshots for UI with libre_anyka_app
+- ptz movement

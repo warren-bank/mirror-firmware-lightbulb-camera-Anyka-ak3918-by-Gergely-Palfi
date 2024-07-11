@@ -70,57 +70,57 @@ else
       reboot
     fi
   fi
-  if [[ $run_cmd_server == 1 ]] && [[ $rootfs_modified == 1 ]]; then
-    cmd_serverd
-  fi
-  if [[ $wifi_start == 1 ]]; then
-    setssid=$(grep '^ssid' $cfgfile | sed 's/ //g') #get ssid line and remove spaces
-    setpass=$(grep '^password' $cfgfile | sed 's/ //g') #get password line and remove spaces
-    setssid=${setssid##*=} #keep the part after the =
-    setpass=${setpass##*=} #keep the part after the =
-    if ! [[ "$setssid" == "$wifi_ssid" ]]; then
+  setssid=$(grep '^ssid' $cfgfile | sed 's/ //g') #get ssid line and remove spaces
+  setpass=$(grep '^password' $cfgfile | sed 's/ //g') #get password line and remove spaces
+  setssid=${setssid##*=} #keep the part after the =
+  setpass=${setpass##*=} #keep the part after the =
+  if ! [[ "$setssid" == "$wifi_ssid" ]]; then
+    input_wifi_creds
+  else
+    if ! [[ "$setpass" == "$wifi_password" ]]; then
       input_wifi_creds
-    else
-      if ! [[ "$setpass" == "$wifi_password" ]]; then
-        input_wifi_creds
-      fi
     fi
-    echo '*************  start network service   *************'
-    /usr/sbin/wifi_manage.sh start
-    /mnt/anyka_hack/web_interface/set_time.sh #wait for wifi connect and set time
   fi
+  echo '*************  start network service   *************'
+  /usr/sbin/wifi_manage.sh start
+  ntpd -n -N -p $time_source &
+  export TZ=$time_zone
   if [[ $run_ftp == 0 ]]; then
     killall tcpsvd
   fi
-  if [[ $run_ssh == 1 ]]; then
-    echo '*************        start ssh         *************'
-    /mnt/anyka_hack/dropbear/dropbearmulti dropbear -r /mnt/anyka_hack/dropbear/dropbear_ecdsa_host_key -B
-  fi
-  if [[ $run_ptz_daemon == 1 ]] && [[ $run_cmd_server == 1 ]]; then
+  #load kernel modules for camera
+  insmod $sensor_kern_module
+  insmod /usr/modules/akcamera.ko
+  insmod /usr/modules/ak_info_dump.ko
+  if [[ $run_ptz_daemon == 1 ]]; then
     echo '*************        start ptz         *************'
-    /mnt/anyka_hack/ptz/run_ptz.sh &
+    if [[ -f /usr/bin/ptz_daemon_dyn ]]; then #use installed version if available
+      ptz_daemon_dyn &
+    else
+      /mnt/anyka_hack/ptz/run_ptz.sh &
+    fi
     if [[ $ptz_init_on_boot == 1 ]]; then
       echo "init_ptz" > /tmp/ptz.daemon
     fi
   fi
-  if [[ $run_web_interface == 1 ]]; then # && [[ $run_snapshot == 1 ]]; then
+  if [[ $run_web_interface == 1 ]]; then
     echo '*************   start web interface    *************'
-    /mnt/anyka_hack/web_interface/start_web_interface.sh
+    if [[ -f /etc/jffs2/www/index.html ]]; then #use installed version if available
+      busybox httpd -p 80 -h /etc/jffs2/www &
+    else
+      /mnt/anyka_hack/web_interface/start_web_interface.sh &
+    fi
   fi
   if [[ $run_libre_anyka == 1 ]]; then
-    /mnt/anyka_hack/libre_anyka_app/run_libre_anyka_app.sh &
-  fi
-  if [[ $run_rtsp == 1 ]]; then
-    echo '*************    start RTSP stream     *************'
-    if [[ -f /usr/bin/rtsp ]]; then
-      stream_video.sh
+    echo '*************    start Libre Anyka     *************'
+    if [[ -f /usr/bin/ptz_daemon_dyn ]]; then #use installed version if available
+      SD_detect=$(mount | grep mmcblk0p1)
+      if [[ ${#SD_detect} == 0 ]]; then
+        md_record_sec=0 #disable recording if SD card is not mounted
+      fi
+      libre_anyka_app -w $image_width -h $image_height -m $md_record_sec &
     else
-      /mnt/anyka_hack/rtsp/stream_video.sh
-    fi
-  else
-    if [[ $run_snapshot == 1 ]]; then
-      echo '*************     serve snapshots      *************'
-      /mnt/anyka_hack/snapshot/run_snapshot.sh &
+      /mnt/anyka_hack/libre_anyka_app/run_libre_anyka_app.sh &
     fi
   fi
   if [[ $run_ipc == 0 ]] && [[ $rootfs_modified == 0 ]]; then

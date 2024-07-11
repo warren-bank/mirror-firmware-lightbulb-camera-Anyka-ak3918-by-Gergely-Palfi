@@ -8,11 +8,9 @@ This script can be used to automate the hacking of the camera.
 
 This is a tested and validated method on one of my cameras with factory reset firmware. Works out of the box, you never have to use the app as wifi will be set up.
 
-1A) Simply copy the `anyka_hack` and `Factory` folder with the `config.sh`, `gergehack.sh` and `gergesettings.txt` to the SD card.
+1A) Simply copy the `anyka_hack` and `Factory` folder to the SD card.
 
-1B) Make sure to check all the settings in `gergesettings.txt` (especially the `rootfs_modified=0` must be set) and add the wifi credentials.
-
-Never put `gergehack.sh` or `gergesettings.txt` in the `anyka_hack` folder if using this method, because they will conflict with the SD hack. Only leave the apps in there.
+1B) Make sure to check all the settings in `anyka_hack/gergesettings.txt` (especially the `rootfs_modified=0` must be set) and add the wifi credentials.
 
 2) Put the SD card into the camera and power it on
 
