@@ -57,6 +57,20 @@ The app does not have `--help`, but it takes arguments
 - `-w <width>` [ default 1280 ]
 - `-h <height>` [ default 720 ]
 - `-m <motion_minimum_record_seconds>` [ default 0 disabled ]
+- `-i <irinvert> [ default 1 ]`
+- `-u "upside down" mode enable (rotates image 180 degree)`
+
+irinvert can be a value 1-4 as follows
+|  value  | black/white vs colour image mode | IR filter |
+|:-------:|:--------------------------------:|:---------:|
+|        1|                                  |           |
+|        2|                                  |   inverted|
+|        3|                          inverted|   inverted|
+|        4|                          inverted|           |
+
+If the colour image looks pink, that menas the IR filter needs to be inverted
+
+If the camera has black/white image during daytime the image mode needs to be inverted
 
 *NOTE: the width and height applies to the preview image. It is recommended to use smaller than 640x480 so that it uses the sub-stream. RTSP and video recording will always use main resolution*
 

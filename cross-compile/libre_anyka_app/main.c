@@ -151,6 +151,8 @@ int w_main = 1280;
 int h_main = 720;
 int w_sub = 640;
 int h_sub = 360;
+int flipmirror=0;	//option -u "upside-down" mode rotate 180
+int irinvert=1;		//option -i value 1-4 can invert IR chutter and image colour
 
 struct video_handle ak_venc[ENCODE_GRP_NUM];
 int md_record_frames =0; //countdown of how many more frames to record
@@ -503,7 +505,9 @@ int capture_init(){
 		ak_vi_close(vi_handle);
 		return -1;
 	}
-	ak_vi_set_flip_mirror(vi_handle, 1, 1); //flip + mirror = rotate 180 degrees
+	if (flipmirror == 1){
+		ak_vi_set_flip_mirror(vi_handle, 1, 1); //flip + mirror = rotate 180 degrees
+	}
 
 	return 1;
 }
@@ -600,7 +604,7 @@ static void *photosensitive_switch_th_ex(void *arg)
 	        ak_print_notice("prev_state=%d, ir_val=%d\n",
 		        misc_ctrl.pre_status, ir_val);
 			ak_misc_set_video_day_night(vi_handle, !ir_val,
-			    DAY_LEVEL_LL);
+			    irinvert);
 			misc_ctrl.pre_status = ir_val;
 		}
 
@@ -818,7 +822,7 @@ void help_message(char* argv[]){
 int parse_args(int argc, char* argv[]){
 
     for (;;) {
-        int opt = getopt(argc, argv, "w:h:m:");
+        int opt = getopt(argc, argv, "w:h:m:i:u");
         if (opt == -1)
             break;
         switch (opt) {
@@ -845,6 +849,18 @@ int parse_args(int argc, char* argv[]){
             break;
         case 'm':
             motion_record_sec = atoi(optarg);
+            break;
+	case 'u':
+            flipmirror = 1;
+            break;
+        case 'i':
+            irinvert = atoi(optarg);
+	    if (irinvert > 4){
+		irinvert=4;
+	    }
+	    if (irinvert < 1){
+		irinvert=1;
+	    }
             break;
         }
     }

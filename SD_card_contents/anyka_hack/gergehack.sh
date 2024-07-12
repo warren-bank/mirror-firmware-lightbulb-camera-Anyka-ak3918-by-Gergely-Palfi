@@ -118,7 +118,7 @@ else
       if [[ ${#SD_detect} == 0 ]]; then
         md_record_sec=0 #disable recording if SD card is not mounted
       fi
-      libre_anyka_app -w $image_width -h $image_height -m $md_record_sec &
+      libre_anyka_app -w $image_width -h $image_height -m $md_record_sec $extra_args &
     else
       /mnt/anyka_hack/libre_anyka_app/run_libre_anyka_app.sh &
     fi
