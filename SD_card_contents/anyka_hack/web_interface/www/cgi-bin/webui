@@ -1,12 +1,9 @@
 #!/bin/sh
 #
-echo "Content-type: text/html"
-echo ""
-command=`echo "$QUERY_STRING" | awk '{split($0,array,"&")} END{print array[1]}' | awk '{split($0,array,"=")} END{print array[2]}'`
-date=`date`
-ipadd=`ip route get 1 | awk '{print $NF;exit}'`
-uptime=`uptime`
+source header
+if [[ -f /tmp/token.txt ]] && [[ "$token" == "$(readline 1 /tmp/token.txt)" ]]; then
 
+ipadd=`ip route get 1 | awk '{print $NF;exit}'`
 
 cat <<EOT
 <!DOCTYPE html>
@@ -15,64 +12,66 @@ cat <<EOT
 <title>Camera - WebUI</title>
 <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body {
-    font-size: 100%;
-    font-family: Arial, Verdana, sans-serif;
-    text-align: center;
-}
-</style>
+<link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<div>
-
-<br />
-RTSP stream Main: rtsp://$ipadd:544/vs0
-<br />
-RTSP stream Sub: rtsp://$ipadd:544/vs1
-<br />
-Snapshot: http://$ipadd:3000/snapshot.jpeg
-<br />
-<img id="snapshot" src="http://$ipadd:3000/preview.jpeg"/>
-<br />
-<br />
-<button onclick="window.location.href='webui?command=ptzinit'" id="home">Init_PTZ</button>
-<br />
-<br />
+<div class="topnav">
+  <a class="active" href="/cgi-bin/webui?token=$token">Home</a>
+  <a href="/cgi-bin/settings?token=$token">Settings</a>
+  <a href="/cgi-bin/system?token=$token">System</a>
+  <a href="/cgi-bin/login">Exit</a>
 </div>
+<section>
+
+<div class="card">
+<h2>Camera Controls</h2>
+<img id="snapshot" src="http://$ipadd:3000/preview.jpeg"/>
+<br>
+<br>
+<button onclick="window.location.href='webui?token=$token&command=ptzinit'" id="home">Init_PTZ</button>
+<br>
+<br>
 <table style="margin: 0px auto;">
     <tr align="center">
-        <td><button onclick="window.location.href='webui?command=ptzlu'">&#11017;</button></td>
-        <td><button onclick="window.location.href='webui?command=ptzu'">&#11014;</button></td>
-        <td><button onclick="window.location.href='webui?command=ptzru'">&#11016;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptzlu'">&#11017;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptzu'">&#11014;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptzru'">&#11016;</button></td>
     </tr>
     <tr align="center">
-        <td><button onclick="window.location.href='webui?command=ptzl'">&#11013;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptzl'">&#11013;</button></td>
         <td>PTZ</td>
-        <td><button onclick="window.location.href='webui?command=ptzr'">&#10145;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptzr'">&#10145;</button></td>
     </tr>
     <tr align="center">
-        <td><button onclick="window.location.href='webui?command=ptzld'">&#11019;</button></td>
-        <td><button onclick="window.location.href='webui?command=ptzd'">&#11015;</button></td>
-        <td><button onclick="window.location.href='webui?command=ptzrd'">&#11018;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptzld'">&#11019;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptzd'">&#11015;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptzrd'">&#11018;</button></td>
     </tr>
 </table>
-<br />
-For manual testing:<br />
-<button onclick="window.location.href='webui?command=irinit'" id="irinit">Init_IR</button>
-<br />
-<br />
-<button onclick="window.location.href='webui?command=iron'" id="irledson">IR Off [ Day ]</button>
-<br />
-<button onclick="window.location.href='webui?command=iroff'" id="irledsoff">IR On [ Night ]</button>
-<br /><br />
-Date - $date
-<br />
-IP Address - $ipadd
-<br />
-Uptime - $uptime
-<br />
-<br />
+<br>
+</div>
+<div class="card">
+<h2>Manual IR Testing</h2>
+<button onclick="window.location.href='webui?token=$token&command=irinit'" id="irinit">Init_IR</button>
+<br>
+<br>
+<button onclick="window.location.href='webui?token=$token&command=iron'" id="irledson">IR Off [ Day ]</button>
+<br>
+<button onclick="window.location.href='webui?token=$token&command=iroff'" id="irledsoff">IR On [ Night ]</button>
+<br><br>
+</div>
+
+<div class="card">
+<h2>Endpoints</h2>
+RTSP stream Main: rtsp://$ipadd:544/vs0
+<br>
+RTSP stream Sub: rtsp://$ipadd:544/vs1
+<br>
+Snapshot: http://$ipadd:3000/snapshot.jpeg
+<br>
+</div>
+
+</section>
 
 <script>
 setInterval(function() { document.getElementById("snapshot").src = "http://$ipadd:3000/" + Math.round(Math.random()*100000) + ".jpeg"; }, 300);
@@ -118,3 +117,6 @@ EOT
  if [ "$command" = "ptzld" ]; then
   echo "left_down" > /tmp/ptz.daemon
  fi
+else
+source footer
+fi

@@ -1,0 +1,17 @@
+readline() {
+  linetoread=$1
+  file=$2
+  sed $linetoread'q;d' $file
+}
+
+QUERY_STRING="${QUERY_STRING//&/ }"
+QUERY_STRING="${QUERY_STRING//%2F//}"
+QUERY_STRING="${QUERY_STRING//%3A/:}"
+
+for i in $QUERY_STRING; do
+  eval $i
+done
+
+
+echo "Content-type: text/html"
+echo ""

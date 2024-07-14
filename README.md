@@ -62,9 +62,15 @@ This is not a complete list. This is only the best feature list. The [old readme
 
 ### Web Interface
 
-I created a combined web interface using the features from `ptz_daemon`, `ak_snapshot`, and `busybox httpd`. The webpage is based on [another Chinese camera hack for Goke processors](https://github.com/dc35956/gk7102-hack).
+I created a combined web interface using the features from `ptz_daemon`, `libre_anyka_app`, and `busybox httpd`. The webpage is based on [another Chinese camera hack for Goke processors](https://github.com/dc35956/gk7102-hack).
 
 ![web_interface](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/raw/branch/main/Images/web_interface.png)
+
+With the most recent update of webui the interface is a lot nicer and has all settings and features of the camera available without needing to edit config files manually.
+
+![web_interface](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/raw/branch/main/Images/web_interface_settings.png)
+
+**Note: the WebUI has a login process using md5 password hash and a token, but this is not secure by any means. Do not expose to the internet!**
 
 
 ### Libre Anyka App
@@ -81,6 +87,8 @@ Does not have:
 - sound (only RTSP stream has sound)
 
 More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/libre_anyka_app) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/libre_anyka_app).
+
+**Note: the RTSP stream and snapshots are not protected by password. Do not expose to the internet!**
 
 
 ### SSH
