@@ -1,13 +1,20 @@
 #!/bin/sh
 
-source header
+if [[ -f /etc/jffs2/www/index.html ]]; then
+    source /etc/jffs2/www/cgi-bin/header
+else
+    source /mnt/anyka_hack/web_interface/www/cgi-bin/header
+fi
 if [[ -f /tmp/token.txt ]] && [[ "$token" == "$(readline 1 /tmp/token.txt)" ]]; then
 
 message_banner=""
 if [[ ${#webui_password} -gt 3 ]]; then
   if [[ "$webui_password" == "$webui_conf_password" ]]; then
     message_banner="<div class=\"banner\">Password change success<br><br><button onclick=\"window.location.href='login'\">Return to Login</button></div>"
-    echo "$%^/k#@>?$webui_password" | md5sum >/etc/jffs2/webui.hash
+    random="$(dd if=/dev/urandom bs=30 count=1)"
+    salt=$random$RANDOM
+    echo "$salt$webui_password" | md5sum >/etc/jffs2/webui.hash
+    echo "$salt">>/etc/jffs2/webui.hash
   else
     message_banner="<div class=\"banner\">Passwords too short or do not match!<br><br><button onclick=\"window.location.href='webui?token=$token'\"> Back </button></div>"
   fi
@@ -34,5 +41,9 @@ $message_banner
 EOT
 
 else
-source footer
+    if [[ -f /etc/jffs2/www/index.html ]]; then
+        source /etc/jffs2/www/cgi-bin/footer
+    else
+        source /mnt/anyka_hack/web_interface/www/cgi-bin/footer
+    fi
 fi

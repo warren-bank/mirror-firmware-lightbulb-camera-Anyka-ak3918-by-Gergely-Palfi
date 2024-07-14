@@ -1,10 +1,18 @@
 #!/bin/sh
 #
+readline() {
+  linetoread=$1
+  file=$2
+  sed $linetoread'q;d' $file
+}
+
 echo "Content-type: text/html"
 echo ""
 
 if ! [[ -f /etc/jffs2/webui.hash ]]; then
-  echo '$%^/k#@>?webui' | md5sum >/etc/jffs2/webui.hash
+  salt=$RANDOM
+  echo $salt'webui' | md5sum >/etc/jffs2/webui.hash
+  echo $salt>>/etc/jffs2/webui.hash
 fi
 
 cat <<EOT

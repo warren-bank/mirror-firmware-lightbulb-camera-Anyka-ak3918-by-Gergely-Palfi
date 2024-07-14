@@ -1,7 +1,11 @@
 #!/bin/sh
 #
 
-source header
+if [[ -f /etc/jffs2/www/index.html ]]; then
+    source /etc/jffs2/www/cgi-bin/header
+else
+    source /mnt/anyka_hack/web_interface/www/cgi-bin/header
+fi
 if [[ -f /tmp/token.txt ]] && [[ "$token" == "$(readline 1 /tmp/token.txt)" ]]; then
 cat <<EOT
 <!DOCTYPE html>
@@ -82,5 +86,9 @@ if [[ -f /mnt/anyka_hack/gergesettings.txt ]]; then
   cp data.tmp /mnt/anyka_hack/gergesettings.txt
 fi
 else
-source footer
+    if [[ -f /etc/jffs2/www/index.html ]]; then
+        source /etc/jffs2/www/cgi-bin/footer
+    else
+        source /mnt/anyka_hack/web_interface/www/cgi-bin/footer
+    fi
 fi
