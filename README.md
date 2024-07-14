@@ -25,8 +25,10 @@ This hack runs only when the SD card is inserted leaving the camera unmodified. 
 
 It is unlikely that this can cause any harm to your camera as the system remains original, but no matter how small the risk it is never zero (unless you have the exact same camera). Try any of these hacks at your own risk.
 
+The SD card hack is a safe way to test compatability with the camera and to see if all features are working.
+
 # Permanent Hack
-This part is optional.
+This part is optional. Make sure everything works with the SD card hack first before you do this.
 The SD hack should launch telnet. Connect with `telnet IP` (user: root, no password)
 
 - `[root@anyka /mnt]$ cat /dev/mtdblock4 > /mnt/mtdblock4.bin`
@@ -107,6 +109,7 @@ More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_
 More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/aenc_demo) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/aenc_demo).
 
 # Permanent system hack level 2
+Make sure everything works with the SD card hack first before you do this.
 
 The permanent hack listed above simply disables the original anyka_ipc and runs the contents of the SD card instead. What if you wish to run the camera without and SD card?
 
