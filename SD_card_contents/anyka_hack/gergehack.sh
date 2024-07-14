@@ -100,6 +100,7 @@ else
       /mnt/anyka_hack/ptz/run_ptz.sh &
     fi
     if [[ $ptz_init_on_boot == 1 ]]; then
+      sleep 10 #wait for ptz_daemon to start and FIFO to be created before writing to it
       echo "init_ptz" > /tmp/ptz.daemon
     fi
   fi
