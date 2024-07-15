@@ -4,19 +4,19 @@ run_ftp=1
 run_telnet=1
 #web interface on port 80 [default 0]
 run_web_interface=1
-  #start ptz_daemon from SD card to control motion [default 1]
-  run_ptz_daemon=1
-    #home the camera ptz at bootup [default 0]
-    ptz_init_on_boot=0
+#start ptz_daemon from SD card to control motion [default 1]
+run_ptz_daemon=1
+#home the camera ptz at bootup [default 0]
+ptz_init_on_boot=0
 #Libre-Anyka-App (RTSP, snapshot and motion trigger recording)
 run_libre_anyka=1
-  #width and height of preview image (SUB channel) [must be smaller than 640x480]
-  image_width=640
-  image_height=360
-  #motion recording minimum length in seconds [default 0 to disable]
-  md_record_sec=0
-  #optional arguments
-  extra_args="-i 4 -u"
+#width and height of preview image (SUB channel) [must be smaller than 640x480]
+image_width=640
+image_height=360
+#motion recording minimum length in seconds [default 0 to disable]
+md_record_sec=0
+#optional arguments
+extra_args="-i 4 -u"
 
 #NTP time server (can be router IP or url)
 time_source=192.168.11.1

@@ -73,6 +73,7 @@ confirm password<br>
 <input type="hidden" NAME="run_telnet" value="0">
 <input type="hidden" NAME="run_web_interface" value="1">
 <input type="hidden" NAME="run_ptz_daemon" value="0">
+<input type="hidden" NAME="ptz_invert" value="0">
 <input type="hidden" NAME="ptz_init_on_boot" value="0">
 <input type="hidden" NAME="run_libre_anyka" value="0">
 <input type="hidden" NAME="rootfs_modified" value="0">
@@ -107,6 +108,7 @@ IR filter invert (image looks pink if set wrong) <input type="checkbox" name="ir
 FTP (File Transfer Protocol) [default 1] <input type="checkbox" name="run_ftp" value="1" $(if [ 1 == $run_ftp ]; then echo 'checked'; fi)><br>
 Telnet [default 1] <input type="checkbox" name="run_telnet" value="1" $(if [ 1 == $run_telnet ]; then echo 'checked'; fi)><br>
 ptz_daemon camera movement [default 1] <input type="checkbox" name="run_ptz_daemon" value="1" $(if [ 1 == $run_ptz_daemon ]; then echo 'checked'; fi)><br>
+Invert camera movement <input type="checkbox" name="ptz_invert" value="1" $(if [ 1 == $ptz_invert ]; then echo 'checked'; fi)><br>
 Home the camera ptz at bootup [default 0] <input type="checkbox" name="ptz_init_on_boot" value="1" $(if [ 1 == $ptz_init_on_boot ]; then echo 'checked'; fi)><br>
 Libre-Anyka-App (RTSP, snapshot and motion trigger recording) [default 1] <input type="checkbox" name="run_libre_anyka" value="1" $(if [ 1 == $run_libre_anyka ]; then echo 'checked'; fi)><br>
 Motion recording in seconds [default 0 to disable] <input type="text" name="md_record_sec" value="$md_record_sec" size=3 maxlength=3><br>

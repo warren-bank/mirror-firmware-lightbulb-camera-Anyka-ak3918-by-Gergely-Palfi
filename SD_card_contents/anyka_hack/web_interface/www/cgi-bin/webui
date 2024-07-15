@@ -6,8 +6,19 @@ else
     source /mnt/anyka_hack/web_interface/www/cgi-bin/header
 fi
 if [[ -f /tmp/token.txt ]] && [[ "$token" == "$(readline 1 /tmp/token.txt)" ]]; then
-
+source /etc/jffs2/gergesettings.txt
 ipadd=`ip route get 1 | awk '{print $NF;exit}'`
+if [[ "$ptz_invert" == 1 ]]; then
+  right='l'
+  left='r'
+  up='d'
+  down='u'
+else
+  right='r'
+  left='l'
+  up='u'
+  down='d'
+fi
 
 cat <<EOT
 <!DOCTYPE html>
@@ -37,32 +48,22 @@ cat <<EOT
 <br>
 <table style="margin: 0px auto;">
     <tr align="center">
-        <td><button onclick="window.location.href='webui?token=$token&command=ptzlu'">&#11017;</button></td>
-        <td><button onclick="window.location.href='webui?token=$token&command=ptzu'">&#11014;</button></td>
-        <td><button onclick="window.location.href='webui?token=$token&command=ptzru'">&#11016;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptz$left$up'">&#11017;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptz$up'">&#11014;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptz$right$up'">&#11016;</button></td>
     </tr>
     <tr align="center">
-        <td><button onclick="window.location.href='webui?token=$token&command=ptzl'">&#11013;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptz$left'">&#11013;</button></td>
         <td>PTZ</td>
-        <td><button onclick="window.location.href='webui?token=$token&command=ptzr'">&#10145;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptz$right'">&#10145;</button></td>
     </tr>
     <tr align="center">
-        <td><button onclick="window.location.href='webui?token=$token&command=ptzld'">&#11019;</button></td>
-        <td><button onclick="window.location.href='webui?token=$token&command=ptzd'">&#11015;</button></td>
-        <td><button onclick="window.location.href='webui?token=$token&command=ptzrd'">&#11018;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptz$left$down'">&#11019;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptz$down'">&#11015;</button></td>
+        <td><button onclick="window.location.href='webui?token=$token&command=ptz$right$down'">&#11018;</button></td>
     </tr>
 </table>
 <br>
-</div>
-<div class="card">
-<h2>Manual IR Testing</h2>
-<button onclick="window.location.href='webui?token=$token&command=irinit'" id="irinit">Init_IR</button>
-<br>
-<br>
-<button onclick="window.location.href='webui?token=$token&command=iron'" id="irledson">IR Off [ Day ]</button>
-<br>
-<button onclick="window.location.href='webui?token=$token&command=iroff'" id="irledsoff">IR On [ Night ]</button>
-<br><br>
 </div>
 
 <div class="card">
