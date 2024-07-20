@@ -14,8 +14,12 @@ update_webui()
     for i in $webuifiles; do
       filename="${i##*/}"
       echo "check $filename"
-      myresult=$( diff /mnt/anyka_hack/web_interface/www/cgi-bin/$filename /etc/jffs2/www/cgi-bin/$filename )
-      if [[ ${#myresult} -gt 0 ]]; then
+      if [[ -f /etc/jffs2/www/cgi-bin/$filename ]]; then
+        myresult=$( diff /mnt/anyka_hack/web_interface/www/cgi-bin/$filename /etc/jffs2/www/cgi-bin/$filename )
+        if [[ ${#myresult} -gt 0 ]]; then
+          cp /mnt/anyka_hack/web_interface/www/cgi-bin/$filename /etc/jffs2/www/cgi-bin/$filename
+        fi
+      else
         cp /mnt/anyka_hack/web_interface/www/cgi-bin/$filename /etc/jffs2/www/cgi-bin/$filename
       fi
     done
