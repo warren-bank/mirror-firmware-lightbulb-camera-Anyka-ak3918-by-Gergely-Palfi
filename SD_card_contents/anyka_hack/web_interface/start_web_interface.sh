@@ -16,7 +16,7 @@ update_webui()
       echo "check $filename"
       myresult=$( diff /mnt/anyka_hack/web_interface/www/cgi-bin/$filename /etc/jffs2/www/cgi-bin/$filename )
       if [[ ${#myresult} -gt 0 ]]; then
-        echo "update $filename"
+        cp /mnt/anyka_hack/web_interface/www/cgi-bin/$filename /etc/jffs2/www/cgi-bin/$filename
       fi
     done
   else
