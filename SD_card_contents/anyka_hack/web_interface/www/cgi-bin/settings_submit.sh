@@ -21,6 +21,7 @@ cat <<EOT
   <a href="/cgi-bin/webui?token=$token">Home</a>
   <a class="active" href="/cgi-bin/settings?token=$token">Settings</a>
   <a href="/cgi-bin/system?token=$token">System</a>
+  <a href="/cgi-bin/events?token=$token">Events</a>
   <a href="/cgi-bin/login">Exit</a>
 </div>
 <section>
@@ -36,28 +37,33 @@ Please reboot for the changes to take effect<br><br>
 </html>
 EOT
 
-if [[ $day_night_invert == 1 ]]; then
-  #3-4
-  if [[ $ir_invert == 1 ]]; then
-    extra_args="-i 3"
+check1=$(echo $QUERY_STRING | grep day_night_invert)
+check2=$(echo $QUERY_STRING | grep ir_invert)
+check3=$(echo $QUERY_STRING | grep image_upside_down)
+if [[ ${#check1} -gt 1 ]] && [[ ${#check2} -gt 1 ]] && [[ ${#check3} -gt 1 ]]; then
+  if [[ $day_night_invert == 1 ]]; then
+    #3-4
+    if [[ $ir_invert == 1 ]]; then
+      extra_args="-i 3"
+    else
+      extra_args="-i 4"
+    fi
   else
-    extra_args="-i 4"
+    #1-2
+    if [[ $ir_invert == 1 ]]; then
+      extra_args="-i 2"
+    else
+      extra_args="-i 1"
+    fi
   fi
-else
-  #1-2
-  if [[ $ir_invert == 1 ]]; then
-    extra_args="-i 2"
-  else
-    extra_args="-i 1"
-  fi
-fi
 
-if [[ $image_upside_down == 1 ]]; then
-  extra_args="\"$extra_args -u\""
-else
-  extra_args="\"$extra_args\""
+  if [[ $image_upside_down == 1 ]]; then
+    extra_args="\"$extra_args -u\""
+  else
+    extra_args="\"$extra_args\""
+  fi
+  QUERY_STRING="$QUERY_STRING extra_args=$extra_args"
 fi
-QUERY_STRING="$QUERY_STRING extra_args=$extra_args"
 
 linecount=1
 #cp /etc/jffs2/gergesettings.txt data.txt

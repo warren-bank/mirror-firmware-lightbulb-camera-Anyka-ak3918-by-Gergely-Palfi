@@ -53,6 +53,7 @@ cat <<EOT
   <a href="/cgi-bin/webui?token=$token">Home</a>
   <a href="/cgi-bin/settings?token=$token">Settings</a>
   <a class="active" href="/cgi-bin/system?token=$token">System</a>
+  <a href="/cgi-bin/events?token=$token">Events</a>
   <a href="/cgi-bin/login">Exit</a>
 </div>
 

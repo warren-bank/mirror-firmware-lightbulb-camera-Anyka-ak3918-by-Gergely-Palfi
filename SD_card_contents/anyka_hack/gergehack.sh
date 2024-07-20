@@ -100,16 +100,16 @@ else
       /mnt/anyka_hack/ptz/run_ptz.sh &
     fi
     if [[ $ptz_init_on_boot == 1 ]]; then
-      sleep 10 #wait for ptz_daemon to start and FIFO to be created before writing to it
+      sleep 10
       echo "init_ptz" > /tmp/ptz.daemon
     fi
   fi
   if [[ $run_web_interface == 1 ]]; then
     echo '*************   start web interface    *************'
-    if [[ -f /etc/jffs2/www/index.html ]]; then #use installed version if available
-      busybox httpd -p 80 -h /etc/jffs2/www &
-    else
+    if [[ -f /mnt/anyka_hack/web_interface/www/index.html ]]; then #use SD version if available
       /mnt/anyka_hack/web_interface/start_web_interface.sh &
+    else
+      busybox httpd -p 80 -h /etc/jffs2/www &
     fi
   fi
   if [[ $run_libre_anyka == 1 ]]; then

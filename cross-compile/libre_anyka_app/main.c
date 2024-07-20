@@ -42,6 +42,9 @@
 #include "ak_thread.h"
 #include "ak_ipc_srv.h"
 #include "ak_venc.h"
+#include "ak_sd_card.h"
+#include "ak_dvr_file.h"
+#include "record_common.h"
 
 // App includes
 //#include "convert.h"
@@ -183,6 +186,23 @@ void my_handler(int s){
    stop_capture();
    //exit(1);
 }
+//return: 0 success, -1 failed
+static int check_sd(){
+	int ret=-1;
+	if(SD_STATUS_CARD_INSERT & ak_sd_check_insert_status()){  //check sd card insert or not
+		ak_print_normal("SD Card Inserted\n");
+		if(AK_SUCCESS == ak_sd_check_mount_status()){
+			ak_print_normal("SD Card mounted\n");
+		} else {
+			ak_print_normal("SD Card not mounted\n");
+			return -1;
+		}
+	} else {
+		ak_print_normal("SD Card not Inserted\n");
+		return -1;
+	}
+	return 0;
+}
 
 static void *venc_open_file(int enc_type)
 {
@@ -191,11 +211,11 @@ static void *venc_open_file(int enc_type)
 	const char *suffix[2] = {".str", ".jpg"};
 	struct ak_date date;
 
-	/* get time string */
+	// get time string
 	ak_get_localdate(&date);
 	ak_date_to_string(&date, time_str);
 
-	/* distinguish stream and jpeg */
+	// distinguish stream and jpeg
 	if (enc_type < ENCODE_PICTURE) {
 		sprintf(file, "%s/%s_%d_%s", SAVE_PATH, time_str, enc_type, suffix[0]);
 		ak_print_normal_ex("[ H264 ] save file: %s\n", file);
@@ -207,7 +227,7 @@ static void *venc_open_file(int enc_type)
 		jpg_cnt++;
 	}
 
-	/* open for all mode */
+	// open for all mode
 	FILE *fp = NULL;
 	fp = fopen(file, "a");
 	if (!fp) {
@@ -235,22 +255,22 @@ static void *venc_demo_open_encoder(int index)
 
 	switch (index) {
 	case 0:
-		param.width = snapshot_ref.res_w;
-		param.height = snapshot_ref.res_h;
+		param.width = w_main;
+		param.height = h_main;
 		param.minqp = 20;
 		param.maxqp = 51;
-		param.fps = 25;
+		param.fps = ak_vi_get_fps(vi_handle);
 		param.goplen = param.fps * 2;	   //current gop is stationary
 		param.bps = 2000;				   //kbps
 		param.profile = PROFILE_MAIN;	   //main profile
-		param.use_chn = ENCODE_SUB_CHN;   //use main yuv channel data
+		param.use_chn = ENCODE_MAIN_CHN;   //use main yuv channel data
 		param.enc_grp = ENCODE_RECORD;     //assignment from enum encode_group_type
 		param.br_mode = BR_MODE_CBR;	   //default is cbr
 		param.enc_out_type = H264_ENC_TYPE;//h.264
 		break;
 	case 1:
-		param.width = snapshot_ref.res_w;
-		param.height = snapshot_ref.res_h;
+		param.width = w_main;
+		param.height = h_main;
 		param.minqp = 20;
 		param.maxqp = 51;
 		param.fps = 10;
@@ -331,7 +351,7 @@ static void *venc_save_stream_thread(void *arg)
 		if ((md_record_frames > 0)&&(!stop)){
 			FILE *fp = venc_open_file(handle->enc_type);
 			//ak_print_error_ex("########### open ###########\n");
-			int frame_num = 0; //ak_vi_get_fps(vi_handle)*motion_record_sec;
+			int frame_num = 0;
 			//md_record_running = 1;
 
 			/*
@@ -700,34 +720,6 @@ void run_rtsp_stuff(){
 }
 
 
-/*
-void bmp_capture(unsigned char *rawimg){
-
-	//char bmp_data_path[50];
-	//sprintf(bmp_data_path, "%s/preview.bmp", out_dir);
-	//logi(" >>>>> Saving snapshot: %s", bmp_data_path);
-	//YUVToBMP(<output_file>, <raw_YUV_img>, <type_of_conversion>, res_w, res_h);
-	//YUVToBMP565(bmp_data_path, rawimg, YUV420ToRGB24, res_w, res_h);
-	//unsigned char *rgb_24 = NULL;
-	//rgb_24 = (unsigned char *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*3);
-	//YUV420ToRGB24(rgb_24,rawimg,snapshot_ref.res_w,snapshot_ref.res_h);
-	//ak_print_normal("[%d] saving to RGB656 buffer: %d\n", snapshot_ref.count, snapshot_ref.capture);
-	if (snapshot_ref.capture == 0){
-		//RGB24ToRGB565(snapshot_ref.rgb_565_n0,rgb_24,snapshot_ref.res_w,snapshot_ref.res_h);
-                YUV420ToRGB565(snapshot_ref.rgb_565_n0,rawimg,snapshot_ref.res_w,snapshot_ref.res_h);
-		snapshot_ref.capture = 1;
-	}else{
-		//RGB24ToRGB565(snapshot_ref.rgb_565_n1,rgb_24,snapshot_ref.res_w,snapshot_ref.res_h);
-                YUV420ToRGB565(snapshot_ref.rgb_565_n1,rawimg,snapshot_ref.res_w,snapshot_ref.res_h);
-		snapshot_ref.capture = 0;
-	}
-	//free(rgb_24);
-	//usleep(250); // wait to write
-	snapshot_ref.count++;
-	//snapshot_ref.capture = 0;
-	//pthread_cond_signal(&snapshot_ref.ready);
-}*/
-
 void capture_loop(){
 
 	//struct video_input_frame frame;
@@ -740,10 +732,12 @@ void capture_loop(){
 	judge.blocks_threshold = 12;
 
 	logv("capture start");
-	//snapshot_ref.rgb_565_n0 = (unsigned short *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*2);
-	//snapshot_ref.rgb_565_n1 = (unsigned short *)malloc(snapshot_ref.res_w*snapshot_ref.res_h*2);
-	if (motion_record_sec > 0)
-		venc_start_stream(ENCODE_MAINCHN_NET); //only encode if motion record flag is set
+
+	if (motion_record_sec > 0){
+		if (!check_sd()) {
+			venc_start_stream(ENCODE_RECORD); //only encode if motion record flag is set
+		}
+	}
 
 	// To get frame by loop
 	while (!stop) {
@@ -753,7 +747,7 @@ void capture_loop(){
 					ak_print_normal("motion detected!!\n");
 					trigger_count++;
 					if (trigger_count >= 2){ //only record when triggered 2 consecutive times to avoid false trigger
-						md_record_frames=motion_record_sec*20;
+						md_record_frames=ak_vi_get_fps(vi_handle)*motion_record_sec;
 						trigger_count=0;
 					}
 				}else{
@@ -764,41 +758,20 @@ void capture_loop(){
 			}else{
 				skip_md--;
 			}
-			//if ((md_record_frames > 0) && (	md_record_running == 0)){
-			//	venc_start_stream(ENCODE_MAINCHN_NET);
-			//}
 		}
 
 
-		//if (snapshot_ref.count > 0){
-			//__LOG_TIME_START();
-			//get frame
-			//if (!ak_vi_get_frame(vi_handle, &frame)) {
-			if (!ak_venc_get_stream(jpeg_stream, &snapshot_ref.jpeg[snapshot_ref.capture])) {
-				//check if image is needed
-				/*if ((snapshot_ref.res_w < 640) || (snapshot_ref.res_h < 480)){
-					ak_venc_send_frame(jpeg_encoder, frame.vi_frame[VIDEO_CHN_SUB].data,
-					frame.vi_frame[VIDEO_CHN_SUB].len, &snapshot_ref.jpeg[snapshot_ref.capture]);
-				}else{
-					ak_venc_send_frame(jpeg_encoder, frame.vi_frame[VIDEO_CHN_MAIN].data,
-					frame.vi_frame[VIDEO_CHN_MAIN].len, &snapshot_ref.jpeg[snapshot_ref.capture]);
-				}*/
-				//printf("JPEG [%d] picture size: %d\n", snapshot_ref.capture, snapshot_ref.jpeg[snapshot_ref.capture].len);
-				//snapshot_ref.count--;
-				snapshot_ref.capture = !snapshot_ref.capture; //mark current image for reading and reserve the other for writing next image
-				free(snapshot_ref.jpeg[snapshot_ref.capture].data);
-				//pthread_cond_signal(&snapshot_ref.ready);
-				// release frame data
-				//ak_vi_release_frame(vi_handle, &frame);
-			} else {
-				// not ready， sleep to release CPU
-				ak_sleep_ms(10);
-			}
-			//__LOG_TIME_END("capture");
-		//}
+		if (!ak_venc_get_stream(jpeg_stream, &snapshot_ref.jpeg[snapshot_ref.capture])) {
+			snapshot_ref.capture = !snapshot_ref.capture; //mark current image for reading and reserve the other for writing next image
+			free(snapshot_ref.jpeg[snapshot_ref.capture].data);
+		} else {
+			// not ready， sleep to release CPU
+			ak_sleep_ms(10);
+		}
+		//__LOG_TIME_END("capture");
 
 		ak_sleep_ms(100); // Free CPU to do other things
-						 // 25ms -> 60~70% CPU
+						// 25ms -> 60~70% CPU
 	}
 	printf("Capture loop exiting.\n");
 	//ak_sleep_ms(2000);
@@ -808,15 +781,14 @@ void capture_loop(){
 	jpeg_encoder = NULL;
 	ak_vi_capture_off(vi_handle);
 	ak_vi_close(vi_handle);
-	//free(snapshot_ref.jpeg[0].data);
-	//free(snapshot_ref.jpeg[1].data);
-	//stop_capture();
 }
 void help_message(char* argv[]){
         fprintf(stderr, "Usage: %s -w <width> -h <height>\n", argv[0]);
         fprintf(stderr, "Example: %s -w 1280 -h 720\n", argv[0]);
         fprintf(stderr, "\nNOTE: If no arguments are given, the default resolution is: %d x %d\n", snapshot_ref.res_w, snapshot_ref.res_h);
         fprintf(stderr, "to enable motion trigger: %s -m <record_seconds>\n", argv[0]);
+		fprintf(stderr, "to rotate image 180: %s -u\n", argv[0]);
+		fprintf(stderr, "to inver IR and day/night: %s -i <value 1-4>\n", argv[0]);
 }
 
 int parse_args(int argc, char* argv[]){
@@ -828,19 +800,12 @@ int parse_args(int argc, char* argv[]){
         switch (opt) {
         case '?':
             fprintf(stderr, "%s: Unexpected option: %c\n", argv[0], optopt);
-	    help_message(argv);
+            help_message(argv);
             return -1;
         case ':':
             fprintf(stderr, "%s: Missing value for: %c\n", argv[0], optopt);
-	    help_message(argv);
+            help_message(argv);
             return -1;
-        /*case 'd':
-            fprintf(stdout, "Using directory: %s\n", optarg);
-            out_dir = optarg;
-            break;
-        case 's':
-            //enable_sound = 1;
-            break;*/
         case 'w':
             snapshot_ref.res_w = atoi(optarg);
             break;
@@ -850,7 +815,7 @@ int parse_args(int argc, char* argv[]){
         case 'm':
             motion_record_sec = atoi(optarg);
             break;
-	case 'u':
+        case 'u':
             flipmirror = 1;
             break;
         case 'i':

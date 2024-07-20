@@ -9,7 +9,7 @@ This is a simplified README with the latest features, to see the hacking process
 - RTSP stream (720p on http://IP:554/vs0)
 - BMP snapshot (up to 720p) on port 3000
 - JPEG snapshot
-- H264 video recording (no mp4 yet)
+- H264 video recording (no mp4 yet, but ffmpeg converts it)
 - Audio playback
 - Audio recording to mp3
 - PTZ movement
@@ -83,7 +83,7 @@ Currently contains features:
 - JPEG snapshot
 - RTSP stream
 - Motion detection trigger
-- H264 `.str` file recording to SD card
+- H264 `.str` file recording to SD card (ffmpeg converts this to mp4 in webUI)
 
 Does not have:
 - sound (only RTSP stream has sound)

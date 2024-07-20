@@ -14,9 +14,8 @@ this repo is based on the [original work of Ricardo](https://github.com/ricardoj
 
 # Things to improve (todo list)
 
-- mp4 file format
-- detect available storage space
-- modify system to fit on 8M flash including libre_anyka_app
+- mp4 file format (ffmpeg is used instead to convert h264 to mp4)
+- detect available storage space (SD detection done, but no space detection)
 
 # How it works
 
