@@ -31,6 +31,6 @@ update_webui()
   fi
 }
 update_webui
-/mnt/anyka_hack/ffmpeg/wrap_mp4.sh &
+/mnt/anyka_hack/ffmpeg/app_restarter.sh &
 restart_process
 

@@ -25,7 +25,7 @@ if [[ -f /mnt/anyka_hack/web_interface/www/index.html ]]; then
     filelist="$filelist<th><button onclick=\"window.location.href='video?token=$token&file=$filename'\">View Event</button></th>"
     filelist="$filelist<th><button onclick=\"window.location.href='del_video.sh?token=$token&file=$filename'\">Delete</button></th></tr>"
   done
-  filelist="$filelist</table></div>"
+  filelist="$filelist</table>Scan for new files with ffmpeg (stops main app to free memory while running)<br><br><button onclick=\"window.location.href='video?token=$token&scan=true'\">Run FFMPEG</button><br><br></div>"
 
 else
   message_banner="<div class=\"banner\">No SD card Inserted!<br><br><button onclick=\"window.location.href='webui?token=$token'\"> Back </button></div>"

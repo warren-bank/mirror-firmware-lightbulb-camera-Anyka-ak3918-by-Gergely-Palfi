@@ -7,7 +7,19 @@ else
     source /mnt/anyka_hack/web_interface/www/cgi-bin/header
 fi
 if [[ -f /tmp/token.txt ]] && [[ "$token" == "$(readline 1 /tmp/token.txt)" ]]; then
-
+if [[ "$scan" == "true" ]]; then
+sh /mnt/anyka_hack/ffmpeg/wrap_mp4.sh
+cat <<EOT
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=/cgi-bin/events?token=$token" />
+    </head>
+    <body>
+        <a href="/cgi-bin/events?token=$token">WebUI</a>
+    </body>
+</html>
+EOT
+else
 cat <<EOT
 <!DOCTYPE html>
 <html>
@@ -40,6 +52,7 @@ cat <<EOT
 </body>
 </html>
 EOT
+fi
 else
     if [[ -f /etc/jffs2/www/index.html ]]; then
         source /etc/jffs2/www/cgi-bin/footer
