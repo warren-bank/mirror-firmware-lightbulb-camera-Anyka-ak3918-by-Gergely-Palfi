@@ -1,5 +1,8 @@
 #! /bin/sh
 
+#import settings
+source /etc/jffs2/gergesettings.txt
+
 restart_process()
 {
   echo 'restarting web interface...'
@@ -24,10 +27,12 @@ update_webui()
       fi
     done
   else
-    mkdir /etc/jffs2/www
-    cp -r /mnt/anyka_hack/web_interface/www/cgi-bin /etc/jffs2/www/
-    cp /mnt/anyka_hack/web_interface/www/styles.css /etc/jffs2/www/
-    cp /mnt/anyka_hack/web_interface/www/index.html /etc/jffs2/www/
+    if [[ $rootfs_modified == 1 ]]; then #only write to camera if it can run without SD
+      mkdir /etc/jffs2/www
+      cp -r /mnt/anyka_hack/web_interface/www/cgi-bin /etc/jffs2/www/
+      cp /mnt/anyka_hack/web_interface/www/styles.css /etc/jffs2/www/
+      cp /mnt/anyka_hack/web_interface/www/index.html /etc/jffs2/www/
+    fi
   fi
 }
 update_webui
