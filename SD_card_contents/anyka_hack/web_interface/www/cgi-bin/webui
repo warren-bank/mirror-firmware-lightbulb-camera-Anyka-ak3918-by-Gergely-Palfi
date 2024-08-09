@@ -69,9 +69,9 @@ cat <<EOT
 
 <div class="card">
 <h2>Endpoints</h2>
-RTSP stream Main: rtsp://$ipadd:544/vs0
+RTSP stream Main: rtsp://$ipadd:554/vs0
 <br>
-RTSP stream Sub: rtsp://$ipadd:544/vs1
+RTSP stream Sub: rtsp://$ipadd:554/vs1
 <br>
 Snapshot: http://$ipadd:3000/snapshot.jpeg
 <br>
