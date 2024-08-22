@@ -3,25 +3,43 @@
 My attempt at reverse engineering and making use of a Chinese junk camera
 
 # Summary
-This is a simplified README with the latest features, to see the hacking process and more development details go to the [old readme version](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/hack_process).
+This is a simplified README with the latest features, to see the hacking process and more development details go to the [old readme version](./hack_process/README.md).
 
 ### Working features
-- RTSP stream (720p on http://IP:554/vs0)
-- BMP snapshot (up to 720p) on port 3000
-- JPEG snapshot
+- FTP on port 21
+  * `ftp://root@<camera-IP>:21/`
+  * user: `root`
+- Telnet on port 23
+  * `<camera-IP>:23`
+  * user: `root`
+- Web interface with PTZ and IR on port 80
+  * `http://<camera-IP>:80/`
+- RTSP stream on port 554
+  * `rtsp://<camera-IP>:554/vs0`
+    - 1280 x 720
+    - 20 fps
+    - H264 MPEG-4 AVC
+  * `rtsp://<camera-IP>:554/vs1`
+    - 640 x 360
+    - 20 fps
+    - H264 MPEG-4 AVC
+  * notes:
+    - plays very nicely in [_ExoPlayer_](https://github.com/google/ExoPlayer)
+- JPEG snapshot on port 3000
+  * `http://<camera-IP>:3000/snapshot.jpeg`
+- BMP snapshot on port 3000
 - H264 video recording (no mp4 yet, but ffmpeg converts it)
 - Audio playback
 - Audio recording to mp3
 - PTZ movement
 - IR shutter
-- combined web interface with ptz and IR on port 80
 - Motion detection
 
 The camera can now be connected to a video recorder or monitor software such as MotionEye.
 
 # Quick Start SD card hack
 
-This hack runs only when the SD card is inserted leaving the camera unmodified. It is beginner friendly, and requires zero coding/terminal skills. See more [here](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/Factory)
+This hack runs only when the SD card is inserted leaving the camera unmodified. It is beginner friendly, and requires zero coding/terminal skills. See more [here](./SD_card_contents/Factory/README.md)
 
 It is unlikely that this can cause any harm to your camera as the system remains original, but no matter how small the risk it is never zero (unless you have the exact same camera). Try any of these hacks at your own risk.
 
@@ -38,9 +56,9 @@ The SD hack should launch telnet. Connect with `telnet IP` (user: root, no passw
 - `mksquashfs squashfs-root newroot.sqsh4 -b 131072 -comp xz -Xdict-size 100%` and copy that newly packed `newroot.sqsh4` to your SD card
 - Install the modified rootfs with `[root@anyka /mnt]$ updater local A=/mnt/newroot.sqsh4`
 
-more detailed process log [here](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot/updater.txt)
+more detailed process log [here](./newroot/updater.txt)
 
-After the rootfs is modified, power off the camera and take out the SD card. Adjust the settings `rootfs_modified=1`. The settings will be applied using the [update](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack) of the script from `anyka_hack` folder.
+After the rootfs is modified, power off the camera and take out the SD card. Adjust the settings `rootfs_modified=1`. The settings will be applied using the [update](./SD_card_contents/anyka_hack) of the script from `anyka_hack` folder.
 
 Enjoy a fully private camera.
 
@@ -60,17 +78,17 @@ https://github.com/e27-camera-hack/E27-Camera-Hack/discussions/1 (discussion whe
 
 
 # APPS and Available Functions
-This is not a complete list. This is only the best feature list. The [old readme version](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/hack_process) was too long, but it has everything not listed here.
+This is not a complete list. This is only the best feature list. The [old readme version](./hack_process/README.md) was too long, but it has everything not listed here.
 
 ### Web Interface
 
 I created a combined web interface using the features from `ptz_daemon`, `libre_anyka_app`, and `busybox httpd`. The webpage is based on [another Chinese camera hack for Goke processors](https://github.com/dc35956/gk7102-hack).
 
-![web_interface](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/raw/branch/main/Images/web_interface.png)
+![web_interface](./Images/web_interface.png)
 
 With the most recent update of webui the interface is a lot nicer and has all settings and features of the camera available without needing to edit config files manually.
 
-![web_interface](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/raw/branch/main/Images/web_interface_settings.png)
+![web_interface](./Images/web_interface_settings.png)
 
 **Note: the WebUI has a login process using md5 password hash and a token, but this is not secure by any means. Do not expose to the internet!**
 
@@ -88,25 +106,25 @@ Currently contains features:
 Does not have:
 - sound (only RTSP stream has sound)
 
-More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/libre_anyka_app) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/libre_anyka_app).
+More info about the [app](./SD_card_contents/anyka_hack/libre_anyka_app) and [source](./cross-compile/libre_anyka_app).
 
 **Note: the RTSP stream and snapshots are not protected by password. Do not expose to the internet!**
 
 
 ### SSH
-[Dropbear](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/dropbear) can give ssh access if telnet is not your preference.
+[Dropbear](./SD_card_contents/anyka_hack/dropbear) can give ssh access if telnet is not your preference.
 
 
 ### Play Sound
 **Extracted from camera.**
 
-More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/ak_adec_demo)
+More info about the [app](./SD_card_contents/anyka_hack/ak_adec_demo)
 
 
 ### Record Sound
 **mp3 recording works.**
 
-More info about the [app](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/SD_card_contents/anyka_hack/aenc_demo) and [source](https://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/cross-compile/aenc_demo).
+More info about the [app](./SD_card_contents/anyka_hack/aenc_demo) and [source](./cross-compile/aenc_demo).
 
 # Permanent system hack level 2
 Make sure everything works with the SD card hack first before you do this.
@@ -119,10 +137,10 @@ It is possible to fit the essential applications into the system flash, but the 
 in camera `/dev/mtdblock4`
 
 In the root filesystem replace `/bin/busybox` with the one in `web_interface` on the SD card. This will add `httpd` functionality for the webUI (and some other features).
-The rootfs must fit within 1MiB (compressed size on flash), so because busybox is now larger I moved `/lib/libstdc++.so.6.0.19` and `/lib/libstdc++.so.6.0.19-gdb.py` to `/usr/lib/` and created symlinks to it instead. After compressing into squashfs again, the [`busyroot.sqsh4`](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot) can be installed, but because the `libstdc++` library is still missing some apps will crash.
+The rootfs must fit within 1MiB (compressed size on flash), so because busybox is now larger I moved `/lib/libstdc++.so.6.0.19` and `/lib/libstdc++.so.6.0.19-gdb.py` to `/usr/lib/` and created symlinks to it instead. After compressing into squashfs again, the [`busyroot.sqsh4`](./newroot/busyroot.sqsh4) can be installed, but because the `libstdc++` library is still missing some apps will crash.
 
 **TLDR**
-- copy [`busyroot.sqsh4`](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot) to SD card
+- copy [`busyroot.sqsh4`](./newroot/busyroot.sqsh4) to SD card
 - install it with `updater local A=/mnt/busyroot.sqsh4`
 - reboot
 
@@ -138,7 +156,7 @@ Finally the [busyusr.sqsh4] partition is now ready to install. After this cleani
 
 **TLDR**
 - make sure your camera is compatible (Realtek 8188 wifi, and gc1034, gc1054, gc1084, h62 or h63 sensor)
-- copy [`busyusr.sqsh4`](http://gitea.raspiweb.com/Gerge/Anyka_ak3918_hacking_journey/src/branch/main/newroot) to SD card
+- copy [`busyusr.sqsh4`](./newroot/busyusr.sqsh4) to SD card
 - install it with `updater local B=/mnt/busyusr.sqsh4`
 - reboot
 
